@@ -1,0 +1,53 @@
+"""agent-uat: build UAT test scripts and go/no-go sign-off reports for AI agents."""
+
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from .scenarios import load_scenarios, to_test_script
+from .signoff import evaluate, load_results, render_markdown
+
+
+def _emit(text: str, out: Path | None) -> None:
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text, encoding="utf-8")
+        print(f"wrote {out}")
+    else:
+        sys.stdout.write(text)
+
+
+def main(argv: list[str] | None = None) -> int:
+    p = argparse.ArgumentParser(prog="agent-uat", description=__doc__)
+    sub = p.add_subparsers(dest="cmd", required=True)
+    v = sub.add_parser("validate", help="check a scenarios file")
+    v.add_argument("--scenarios", required=True, type=Path)
+    s = sub.add_parser("script", help="render a business-user test script")
+    s.add_argument("--scenarios", required=True, type=Path)
+    s.add_argument("--out", type=Path)
+    g = sub.add_parser("signoff", help="evaluate results and write a go/no-go report")
+    g.add_argument("--scenarios", required=True, type=Path)
+    g.add_argument("--results", required=True, type=Path)
+    g.add_argument("--min-pass-rate", type=float, default=0.9)
+    g.add_argument("--out", type=Path)
+    g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
+    a = p.parse_args(argv)
+
+    scenarios = load_scenarios(a.scenarios)
+    if a.cmd == "validate":
+        print(f"OK: {len(scenarios)} scenarios")
+        return 0
+    if a.cmd == "script":
+        _emit(to_test_script(scenarios), a.out)
+        return 0
+    data = load_results(a.results)
+    ev = evaluate(scenarios, data, a.min_pass_rate)
+    _emit(render_markdown(ev, data.get("run", {})), a.out)
+    print(f"decision: {ev.decision}", file=sys.stderr)
+    return 1 if a.strict and ev.decision != "GO" else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
