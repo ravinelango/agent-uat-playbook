@@ -112,3 +112,34 @@ def test_argument_checks_without_details_are_a_condition():
            tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}])
     ev = evaluate([s], {"results": [res("A", actual_tool_calls=["lookup_order"])]})
     assert ev.decision == "GO WITH CONDITIONS" and "not verified" in ev.conditions[0]
+
+
+def test_run_stats_from_outcomes_and_totals():
+    from agent_uat.signoff import run_stats
+    st = run_stats(res("A", "fail", run_outcomes=["pass", "pass", "fail"]))
+    assert st.runs == 3 and st.passed == 2 and st.failed == 1 and st.blocked == 0
+    assert st.pass_rate == 2 / 3 and st.unstable
+    st = run_stats(res("B", runs_passed=3, runs_total=3))
+    assert st.summary() == "3/3" and not st.unstable and st.pass_rate == 1.0
+    st = run_stats(res("C", "blocked", runs_passed=0, runs_total=2))
+    assert st.blocked == 2 and st.failed == 0 and not st.unstable
+    st = run_stats(res("D", "fail", runs_passed=1, runs_total=3, runs_blocked=1))
+    assert st.passed == 1 and st.failed == 1 and st.blocked == 1 and st.unstable
+
+
+def test_unstable_multi_run_is_a_condition():
+    data = {"results": [res("A", "fail", run_outcomes=["pass", "fail", "pass"])]}
+    ev = evaluate([sc("A")], data, min_pass_rate=0)
+    assert ev.decision == "GO WITH CONDITIONS"
+    assert any("unstable" in c and "2 pass" in c and "1 fail" in c for c in ev.conditions)
+    assert ev.rows[0]["stats"].unstable
+
+
+def test_multi_run_section_in_example_report(tmp_path):
+    out = tmp_path / "signoff.md"
+    assert main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
+                 "--results", str(EX / "support_agent_results.json"), "--out", str(out)]) == 0
+    md = out.read_text()
+    assert "## Multi-run statistics" in md
+    assert "| INJ-01 | 3 | 2 | 1 | 0 | 67% | no |" in md
+    assert "unstable across runs" in md
