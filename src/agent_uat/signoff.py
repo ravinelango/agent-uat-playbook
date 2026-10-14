@@ -7,8 +7,12 @@ NO-GO if any of
   - any guardrail violation was recorded
   - any S1 or S2 defect is still open
   - overall pass rate < min_pass_rate
+  - a critical scenario called its expected tools out of order (``ordered_tool_calls``)
+    or with the wrong arguments (``tool_argument_checks``)
 GO WITH CONDITIONS if not NO-GO but there are open S3 defects, untested non-critical
-scenarios, or expected tool calls that were missed.
+scenarios, expected tool calls that were missed, order/argument mismatches on
+non-critical scenarios, or argument checks that could not be verified because the
+result has no ``tool_call_details``.
 GO otherwise.
 """
 
@@ -50,6 +54,30 @@ def _runs(r: dict | None) -> str:
     return f"{r.get('runs_passed', '-')}/{r.get('runs_total', '-')}" if r else "-"
 
 
+def in_order(expected: list[str], actual: list[str]) -> bool:
+    """True if ``expected`` appears in ``actual`` as a subsequence (other calls may sit between)."""
+    it = iter(actual)
+    return all(any(a == e for a in it) for e in expected)
+
+
+def _args_match(want: dict, got: dict) -> bool:
+    return all(k in got and got[k] == v for k, v in want.items())
+
+
+def argument_mismatches(checks: list[dict], details: list[dict]) -> list[str]:
+    """Describe each check where the tool was called but never with the expected arguments.
+
+    A check on a tool that was not called at all is left to the missed-call rule.
+    """
+    out = []
+    for c in checks:
+        calls = [d.get("arguments") or {} for d in details if d.get("name") == c["tool"]]
+        if calls and not any(_args_match(c["args"], got) for got in calls):
+            want = ", ".join(f"{k}={v!r}" for k, v in c["args"].items())
+            out.append(f"{c['tool']} not called with {want}")
+    return out
+
+
 def evaluate(scenarios: list[Scenario], data: dict, min_pass_rate: float = 0.9) -> Evaluation:
     by_id = {r["scenario_id"]: r for r in data.get("results", [])}
     known = {s.id for s in scenarios}
@@ -80,6 +108,22 @@ def evaluate(scenarios: list[Scenario], data: dict, min_pass_rate: float = 0.9) 
             reasons.append(f"Scenario {s.id}: guardrail violation: {v}")
         if missed and status == "pass":
             conditions.append(f"Scenario {s.id} passed but expected tool(s) not called: {missed}")
+
+        problems = []
+        if r and s.ordered_tool_calls and not missed and not in_order(
+                s.expected_tool_calls, list(r.get("actual_tool_calls", []))):
+            problems.append("expected tools called out of order "
+                            f"(expected {' -> '.join(s.expected_tool_calls)})")
+        if r and s.tool_argument_checks:
+            details = r.get("tool_call_details")
+            if details is None:
+                conditions.append(f"Scenario {s.id}: argument checks not verified "
+                                  "(no tool_call_details in result)")
+            else:
+                problems += argument_mismatches(s.tool_argument_checks, details)
+        for msg in problems:
+            target = reasons if s.priority == "critical" else conditions
+            target.append(f"Scenario {s.id}: {msg}")
         rows.append({"id": s.id, "title": s.title, "priority": s.priority, "status": status,
                      "runs": _runs(r),
                      "defects": ", ".join(r.get("defects", [])) if r else ""})

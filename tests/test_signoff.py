@@ -73,3 +73,42 @@ def test_example_scenarios_valid_and_script(tmp_path):
                  "--out", str(out)]) == 0
     assert "REF-01" in out.read_text()
     json.loads((EX / "support_agent_results.json").read_text())
+
+
+def test_in_order_allows_calls_in_between():
+    from agent_uat.signoff import in_order
+    assert in_order(["a", "b"], ["a", "x", "b"])
+    assert not in_order(["a", "b"], ["b", "a"])
+    assert not in_order(["a", "a"], ["a"])
+
+
+def test_out_of_order_blocks_critical_and_conditions_others():
+    kw = {"expected_tool_calls": ["lookup_order", "create_refund_request"],
+          "ordered_tool_calls": True}
+    swapped = res("A", actual_tool_calls=["create_refund_request", "lookup_order"])
+    ev = evaluate([sc("A", "critical", **kw)], {"results": [swapped]})
+    assert ev.decision == "NO-GO" and "out of order" in ev.reasons[0]
+    ev = evaluate([sc("A", **kw)], {"results": [swapped]})
+    assert ev.decision == "GO WITH CONDITIONS" and "out of order" in ev.conditions[0]
+    ok = res("A", actual_tool_calls=["lookup_order", "get_tracking", "create_refund_request"])
+    assert evaluate([sc("A", "critical", **kw)], {"results": [ok]}).decision == "GO"
+
+
+def test_argument_checks_use_tool_call_details():
+    s = sc("A", "critical", expected_tool_calls=["lookup_order"],
+           tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}])
+    good = res("A", actual_tool_calls=["lookup_order"],
+               tool_call_details=[{"name": "lookup_order", "arguments": {"order_id": "A1001",
+                                                                         "fields": "all"}}])
+    assert evaluate([s], {"results": [good]}).decision == "GO"
+    bad = res("A", actual_tool_calls=["lookup_order"],
+              tool_call_details=[{"name": "lookup_order", "arguments": {"order_id": "A1002"}}])
+    ev = evaluate([s], {"results": [bad]})
+    assert ev.decision == "NO-GO" and "order_id='A1001'" in ev.reasons[0]
+
+
+def test_argument_checks_without_details_are_a_condition():
+    s = sc("A", expected_tool_calls=["lookup_order"],
+           tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}])
+    ev = evaluate([s], {"results": [res("A", actual_tool_calls=["lookup_order"])]})
+    assert ev.decision == "GO WITH CONDITIONS" and "not verified" in ev.conditions[0]

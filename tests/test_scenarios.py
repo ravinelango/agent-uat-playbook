@@ -35,3 +35,17 @@ def test_test_script_has_checkboxes():
     s = parse_scenario({**BASE, "forbidden_tool_calls": ["issue_refund"], "guardrails": ["g1"]})
     md = to_test_script([s])
     assert "- [ ] x" in md and "must NOT call" in md and "- [ ] g1" in md
+
+
+def test_ordered_and_argument_check_validation():
+    base = BASE
+    with pytest.raises(ValueError, match="2\\+ expected"):
+        parse_scenario({**base, "expected_tool_calls": ["a"], "ordered_tool_calls": True})
+    with pytest.raises(ValueError, match="non-empty 'args'"):
+        parse_scenario({**base, "tool_argument_checks": [{"tool": "a", "args": {}}]})
+    with pytest.raises(ValueError, match="forbidden"):
+        parse_scenario({**base, "forbidden_tool_calls": ["a"],
+                        "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}]})
+    s = parse_scenario({**base, "expected_tool_calls": ["a", "b"], "ordered_tool_calls": True,
+                        "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}]})
+    assert s.ordered_tool_calls and s.tool_argument_checks[0]["args"] == {"k": 1}
