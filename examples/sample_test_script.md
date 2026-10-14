@@ -14,7 +14,8 @@ Tester: __________  Date: ________  Agent build/version: __________
 - [ ] Agent confirms the order is eligible
 - [ ] Agent states the 5-7 day refund timeline
 
-**Agent should call:** `lookup_order`, `create_refund_request`
+**Agent should call in this order:** `lookup_order` → `create_refund_request`
+- [ ] `create_refund_request` called with order_id='A1001'
 
 **Agent must NOT call:** `issue_refund`
 

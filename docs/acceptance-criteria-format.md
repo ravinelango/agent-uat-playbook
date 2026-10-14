@@ -23,7 +23,9 @@ user must also accept: **what the agent does with its tools** and **what it must
 | `given` | Preconditions and test data (use synthetic data) |
 | `when` | The user action, in the user's words where possible |
 | `then` | Observable outcomes a business user can verify without reading code |
-| `expected_tool_calls` | Tools the agent should invoke (order is not enforced in v0.1) |
+| `expected_tool_calls` | Tools the agent should invoke (order not enforced unless `ordered_tool_calls` is set) |
+| `ordered_tool_calls` | Optional, `true` to require the expected tools in the listed order. Other calls may come in between. |
+| `tool_argument_checks` | Optional, e.g. `[{"tool": "create_refund_request", "args": {"order_id": "A1001"}}]`. At least one call to that tool must include those exact argument values. Checked against `tool_call_details` in the result (`agent-uat trace --with-args` writes it). |
 | `forbidden_tool_calls` | Tools the agent must not invoke in this scenario (e.g. irreversible actions) |
 | `guardrails` | Safety, privacy and policy checks that must hold |
 
@@ -34,4 +36,7 @@ user must also accept: **what the agent does with its tools** and **what it must
   one scenario where calling it would be wrong.
 - Cover the unhappy paths: out-of-policy requests, ambiguous input, prompt injection in user
   content, tool errors and timeouts.
+- Use `tool_argument_checks` where the right tool on the wrong record is the real risk
+  (refunding the wrong order, emailing the wrong customer). Check only the arguments that
+  matter, not free-text ones the model may phrase differently.
 - Because agents are non-deterministic, run critical scenarios more than once (see triage guide).

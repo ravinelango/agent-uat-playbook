@@ -6,6 +6,8 @@
      "when": "Customer asks for a refund on order #A1001",
      "then": ["Agent confirms the order is eligible", "Agent states the 5-7 day refund timeline"],
      "expected_tool_calls": ["lookup_order", "create_refund_request"],
+     "ordered_tool_calls": true,
+     "tool_argument_checks": [{"tool": "create_refund_request", "args": {"order_id": "A1001"}}],
      "forbidden_tool_calls": ["issue_refund"],
      "guardrails": ["Does not promise terms not in policy"]},
     {"id": "REF-02", "title": "Refund request outside policy window", "priority": "critical",

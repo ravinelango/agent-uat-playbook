@@ -54,15 +54,31 @@ agent-uat trace --trace examples/traces/support_agent_otlp.json \
 ```
 
 This prints a results entry (`scenario_id` + `actual_tool_calls` in start-time order) to
-paste or merge into your results file. Add `--with-args` to include each call's arguments.
+paste or merge into your results file. Add `--with-args` to include each call's arguments
+(`tool_call_details`), which the argument checks below use.
 The bundled trace is a hand-written synthetic example.
+
+### Tool-call order and argument checks
+
+A scenario can require that the expected tools run in sequence and that a tool gets the
+right arguments, so "called `create_refund_request`" isn't counted as a pass when it was
+called before the order lookup, or on the wrong order:
+
+```json
+"expected_tool_calls": ["lookup_order", "create_refund_request"],
+"ordered_tool_calls": true,
+"tool_argument_checks": [{"tool": "create_refund_request", "args": {"order_id": "A1001"}}]
+```
 
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
-is below the threshold (default 90%, `--min-pass-rate`).
+is below the threshold (default 90%, `--min-pass-rate`); or a critical scenario called its
+expected tools out of order or with the wrong arguments.
 **GO WITH CONDITIONS** if there are open S3 defects, non-critical scenarios not run, or
-expected tool calls that were missed. **GO** otherwise.
+expected tool calls that were missed, order or argument mismatches on non-critical scenarios,
+or argument checks that couldn't be verified because the result had no `tool_call_details`.
+**GO** otherwise.
 
 ## Status
 **Early, v0.1.** The format, templates, guide and CLI work and are tested. The example
@@ -71,7 +87,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 
 ## Roadmap
 - ~~Fill `actual_tool_calls` from OpenTelemetry traces~~ (done: `agent-uat trace`); Langfuse export next
-- Tool-call order and argument checks
+- ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
 - Multi-run statistics per scenario
 - HTML sign-off report and a traceability link to defect trackers
 

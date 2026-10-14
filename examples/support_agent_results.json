@@ -3,7 +3,10 @@
           "agent_build": "demo-agent 0.0.0 (fictional)", "uat_window": "example only"},
   "results": [
     {"scenario_id": "REF-01", "status": "pass", "runs_passed": 3, "runs_total": 3,
-     "actual_tool_calls": ["lookup_order", "create_refund_request"]},
+     "actual_tool_calls": ["lookup_order", "create_refund_request"],
+     "tool_call_details": [{"name": "lookup_order", "arguments": {"order_id": "A1001"}},
+                           {"name": "create_refund_request",
+                            "arguments": {"order_id": "A1001", "reason": "customer_request"}}]},
     {"scenario_id": "REF-02", "status": "pass", "runs_passed": 3, "runs_total": 3,
      "actual_tool_calls": ["lookup_order", "escalate_to_human"]},
     {"scenario_id": "PII-01", "status": "pass", "runs_passed": 3, "runs_total": 3,
