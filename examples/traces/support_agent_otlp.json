@@ -1,0 +1,185 @@
+{
+ "_label": "SYNTHETIC EXAMPLE: hand-written OTLP/JSON trace for a fictional support agent. Not a real run.",
+ "resourceSpans": [
+  {
+   "resource": {
+    "attributes": [
+     {
+      "key": "service.name",
+      "value": {
+       "stringValue": "demo-support-agent"
+      }
+     }
+    ]
+   },
+   "scopeSpans": [
+    {
+     "scope": {
+      "name": "demo"
+     },
+     "spans": [
+      {
+       "traceId": "0af7651916cd43dd8448eb211c80319c",
+       "spanId": "b7ad6b7169203331",
+       "name": "chat demo-model",
+       "startTimeUnixNano": "1760000000000000000",
+       "endTimeUnixNano": "1760000000001000000",
+       "attributes": [
+        {
+         "key": "session.id",
+         "value": {
+          "stringValue": "run-1"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "0af7651916cd43dd8448eb211c80319c",
+       "spanId": "b7ad6b7169203333",
+       "name": "execute_tool create_refund_request",
+       "startTimeUnixNano": "1760000003000000000",
+       "endTimeUnixNano": "1760000003001000000",
+       "attributes": [
+        {
+         "key": "session.id",
+         "value": {
+          "stringValue": "run-1"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "create_refund_request"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_b7ad6b7169203333"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"order_id\": \"A1001\", \"reason\": \"changed mind\"}"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "0af7651916cd43dd8448eb211c80319c",
+       "spanId": "b7ad6b7169203332",
+       "name": "execute_tool lookup_order",
+       "startTimeUnixNano": "1760000001000000000",
+       "endTimeUnixNano": "1760000001001000000",
+       "attributes": [
+        {
+         "key": "session.id",
+         "value": {
+          "stringValue": "run-1"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "lookup_order"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_b7ad6b7169203332"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"order_id\": \"A1001\"}"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "0af7651916cd43dd8448eb211c80319c",
+       "spanId": "b7ad6b7169203334",
+       "name": "chat demo-model",
+       "startTimeUnixNano": "1760000004000000000",
+       "endTimeUnixNano": "1760000004001000000",
+       "attributes": [
+        {
+         "key": "session.id",
+         "value": {
+          "stringValue": "run-1"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "chat"
+         }
+        }
+       ]
+      },
+      {
+       "traceId": "0af7651916cd43dd8448eb211c80319c",
+       "spanId": "b7ad6b7169203335",
+       "name": "execute_tool lookup_order",
+       "startTimeUnixNano": "1760000005000000000",
+       "endTimeUnixNano": "1760000005001000000",
+       "attributes": [
+        {
+         "key": "session.id",
+         "value": {
+          "stringValue": "run-2"
+         }
+        },
+        {
+         "key": "gen_ai.operation.name",
+         "value": {
+          "stringValue": "execute_tool"
+         }
+        },
+        {
+         "key": "gen_ai.tool.name",
+         "value": {
+          "stringValue": "lookup_order"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.id",
+         "value": {
+          "stringValue": "call_b7ad6b7169203335"
+         }
+        },
+        {
+         "key": "gen_ai.tool.call.arguments",
+         "value": {
+          "stringValue": "{\"order_id\": \"A1002\"}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
