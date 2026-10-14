@@ -70,6 +70,15 @@ called before the order lookup, or on the wrong order:
 "tool_argument_checks": [{"tool": "create_refund_request", "args": {"order_id": "A1001"}}]
 ```
 
+### Multi-run statistics
+
+Agents are non-deterministic: the same scenario can pass twice and fail once. Each result
+row can record attempts as `runs_passed` / `runs_total` (and optional `runs_blocked`), or
+as an explicit `run_outcomes` list (`pass` / `fail` / `blocked` per attempt). The sign-off
+report adds a **Multi-run statistics** table (runs, pass/fail/blocked counts, pass rate,
+stable yes/no). Mixed outcomes mark the scenario **unstable** and become a condition; any
+S1 occurrence is still S1 (see the triage guide).
+
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
@@ -77,7 +86,8 @@ is below the threshold (default 90%, `--min-pass-rate`); or a critical scenario 
 expected tools out of order or with the wrong arguments.
 **GO WITH CONDITIONS** if there are open S3 defects, non-critical scenarios not run, or
 expected tool calls that were missed, order or argument mismatches on non-critical scenarios,
-or argument checks that couldn't be verified because the result had no `tool_call_details`.
+argument checks that couldn't be verified because the result had no `tool_call_details`, or a
+scenario is unstable across runs (mixed pass/fail/blocked).
 **GO** otherwise.
 
 ## Status
@@ -88,7 +98,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 ## Roadmap
 - ~~Fill `actual_tool_calls` from OpenTelemetry traces~~ (done: `agent-uat trace`); Langfuse export next
 - ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
-- Multi-run statistics per scenario
+- ~~Multi-run statistics per scenario~~ (done: pass/fail/blocked counts, pass rate, unstable flag)
 - HTML sign-off report and a traceability link to defect trackers
 
 ## License
