@@ -43,6 +43,20 @@ Add `--strict` to make `signoff` exit 1 unless the decision is GO (useful as a r
 See [`examples/sample_signoff.md`](examples/sample_signoff.md): the synthetic run is a
 **NO-GO** because the agent acted on a prompt injection in 1 of 3 runs.
 
+### Filling `actual_tool_calls` from traces
+
+If the agent is instrumented with OpenTelemetry (GenAI semantic conventions, `execute_tool`
+spans), let the trace say which tools ran instead of copying them by hand:
+
+```bash
+agent-uat trace --trace examples/traces/support_agent_otlp.json \
+  --scenario-id REF-01 --session run-1
+```
+
+This prints a results entry (`scenario_id` + `actual_tool_calls` in start-time order) to
+paste or merge into your results file. Add `--with-args` to include each call's arguments.
+The bundled trace is a hand-written synthetic example.
+
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
@@ -56,7 +70,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 **No real agent UAT results are published here.**
 
 ## Roadmap
-- Import results from agent traces (e.g. OpenTelemetry/Langfuse exports) to fill `actual_tool_calls`
+- ~~Fill `actual_tool_calls` from OpenTelemetry traces~~ (done: `agent-uat trace`); Langfuse export next
 - Tool-call order and argument checks
 - Multi-run statistics per scenario
 - HTML sign-off report and a traceability link to defect trackers

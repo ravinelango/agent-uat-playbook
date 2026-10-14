@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
 from .scenarios import load_scenarios, to_test_script
 from .signoff import evaluate, load_results, render_markdown
+from .traces import load_tool_calls
 
 
 def _emit(text: str, out: Path | None) -> None:
@@ -33,8 +35,21 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--min-pass-rate", type=float, default=0.9)
     g.add_argument("--out", type=Path)
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
+    t = sub.add_parser("trace", help="turn a trace export into a results entry for one run")
+    t.add_argument("--trace", required=True, type=Path, help="OTLP/JSON or flat span list")
+    t.add_argument("--scenario-id", required=True)
+    t.add_argument("--session", help="keep only spans with this session.id")
+    t.add_argument("--with-args", action="store_true", help="include tool-call arguments")
     a = p.parse_args(argv)
 
+    if a.cmd == "trace":
+        calls = load_tool_calls(a.trace, a.session)
+        entry = {"scenario_id": a.scenario_id, "actual_tool_calls": [c.name for c in calls]}
+        if a.with_args:
+            entry["tool_call_details"] = [{"name": c.name, "arguments": c.arguments}
+                                          for c in calls]
+        print(json.dumps(entry, indent=2))
+        return 0
     scenarios = load_scenarios(a.scenarios)
     if a.cmd == "validate":
         print(f"OK: {len(scenarios)} scenarios")

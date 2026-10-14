@@ -41,3 +41,13 @@ def test_int_attribute_values_decode():
         {"key": "session.id", "value": {"intValue": "7"}},
     ]}]}]}]}
     assert len(extract_tool_calls(json.loads(json.dumps(data)), session="7")) == 1
+
+
+def test_cli_trace_prints_results_entry(capsys):
+    from agent_uat.cli import main
+
+    assert main(["trace", "--trace", str(FIXTURE), "--scenario-id", "REF-01",
+                 "--session", "run-1"]) == 0
+    entry = json.loads(capsys.readouterr().out)
+    assert entry == {"scenario_id": "REF-01",
+                     "actual_tool_calls": ["lookup_order", "create_refund_request"]}
