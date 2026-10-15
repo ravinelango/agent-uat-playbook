@@ -18,6 +18,7 @@ GO otherwise.
 
 from __future__ import annotations
 
+import html
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -279,3 +280,108 @@ def render_markdown(ev: Evaluation, run: dict) -> str:
               "", "_The generated decision is a recommendation from the rules above; "
               "the accountable owners make the release call._", ""]
     return "\n".join(lines)
+
+
+_CSS = (
+    "body{font-family:system-ui,sans-serif;max-width:960px;margin:2em auto;color:#1b1f24;"
+    "line-height:1.45}"
+    "h1,h2,h3{margin-top:1.4em}"
+    "table{border-collapse:collapse;width:100%;margin:1em 0}"
+    "th,td{border:1px solid #d0d7de;padding:6px 8px;text-align:left;vertical-align:top}"
+    "th{background:#f6f8fa}"
+    ".banner{background:#fff8c5;border:1px solid #d4a72c;padding:8px 12px}"
+    ".meta{margin:.5em 0 1em}"
+    ".GO{color:#1a7f37;font-weight:700}"
+    ".NO-GO{color:#cf222e;font-weight:700}"
+    ".GO.WITH.CONDITIONS{color:#9a6700;font-weight:700}"
+    ".sign{margin-top:2em;border-top:1px solid #d0d7de;padding-top:1em}"
+    "ul{padding-left:1.2em}"
+    "@media print{body{margin:.5in}th{background:#eee}"
+    ".banner{-webkit-print-color-adjust:exact;print-color-adjust:exact}}"
+)
+
+
+def _decision_span(decision: str) -> str:
+    cls = html.escape(decision.replace(" ", "."))
+    return f"<span class='{cls}'>{html.escape(decision)}</span>"
+
+
+def render_html(ev: Evaluation, run: dict) -> str:
+    """Self-contained, print-friendly HTML go/no-go sign-off (no external assets)."""
+    e = html.escape
+    parts = [
+        "<!doctype html><html lang='en'><head><meta charset='utf-8'>",
+        "<title>UAT go/no-go sign-off</title>",
+        f"<style>{_CSS}</style></head><body>",
+        "<h1>UAT go/no-go sign-off</h1>",
+    ]
+    if run.get("label"):
+        parts.append(f"<p class='banner'><strong>{e(str(run['label']))}</strong></p>")
+    meta = [(k.replace("_", " ").capitalize(), v)
+            for k, v in run.items() if k != "label"]
+    if meta:
+        parts.append("<ul class='meta'>")
+        parts += [f"<li>{e(k)}: {e(str(v))}</li>" for k, v in meta]
+        parts.append("</ul>")
+    parts.append(f"<h2>Decision: {_decision_span(ev.decision)}</h2>")
+    if ev.reasons:
+        parts.append("<h3>Blocking reasons</h3><ul>")
+        parts += [f"<li>{e(x)}</li>" for x in ev.reasons]
+        parts.append("</ul>")
+    if ev.conditions:
+        parts.append("<h3>Conditions</h3><ul>")
+        parts += [f"<li>{e(x)}</li>" for x in ev.conditions]
+        parts.append("</ul>")
+    c = ev.counts
+    parts.append(
+        f"<h2>Summary</h2><p>Pass rate {ev.pass_rate:.0%} · pass {c['pass']} · "
+        f"fail {c['fail']} · blocked {c['blocked']} · not run {c['not run']}</p>")
+    parts.append("<h2>Scenario results</h2><table><tr>"
+                 "<th>Scenario</th><th>Title</th><th>Priority</th><th>Status</th>"
+                 "<th>Runs passed</th><th>Defects</th></tr>")
+    for r in ev.rows:
+        parts.append(
+            f"<tr><td>{e(r['id'])}</td><td>{e(r['title'])}</td><td>{e(r['priority'])}</td>"
+            f"<td>{e(r['status'].upper())}</td><td>{e(r['runs'])}</td>"
+            f"<td>{e(r['defects'] or '-')}</td></tr>")
+    parts.append("</table>")
+    parts.append(
+        "<h2>Multi-run statistics</h2>"
+        "<p>Per-scenario attempt counts. A scenario is <strong>unstable</strong> when runs "
+        "disagree (pass vs fail/blocked). Any S1 occurrence is still S1.</p>"
+        "<table><tr><th>Scenario</th><th>Runs</th><th>Pass</th><th>Fail</th>"
+        "<th>Blocked</th><th>Pass rate</th><th>Stable</th></tr>")
+    for r in ev.rows:
+        st: RunStats = r["stats"]
+        if st.runs <= 0:
+            parts.append(f"<tr><td>{e(r['id'])}</td><td>-</td><td>-</td><td>-</td>"
+                         "<td>-</td><td>-</td><td>-</td></tr>")
+        else:
+            stable = "no" if st.unstable else "yes"
+            parts.append(
+                f"<tr><td>{e(r['id'])}</td><td>{st.runs}</td><td>{st.passed}</td>"
+                f"<td>{st.failed}</td><td>{st.blocked}</td>"
+                f"<td>{e(_fmt_rate(st.pass_rate))}</td><td>{stable}</td></tr>")
+    parts.append("</table><h2>Open defects</h2>")
+    if ev.open_defects:
+        parts.append("<table><tr><th>ID</th><th>Severity</th><th>Category</th>"
+                     "<th>Scenario</th><th>Title</th></tr>")
+        for d in ev.open_defects:
+            parts.append(
+                f"<tr><td>{e(d['id'])}</td><td>{e(d['severity'])}</td>"
+                f"<td>{e(str(d.get('category', '-')))}</td>"
+                f"<td>{e(str(d.get('scenario_id', '-')))}</td>"
+                f"<td>{e(str(d.get('title', '')))}</td></tr>")
+        parts.append("</table>")
+    else:
+        parts.append("<p>None.</p>")
+    parts.append(
+        "<div class='sign'><h2>Sign-off</h2>"
+        "<table><tr><th>Role</th><th>Name</th><th>Decision</th><th>Date</th></tr>"
+        "<tr><td>Business owner</td><td></td><td></td><td></td></tr>"
+        "<tr><td>QA / UAT lead</td><td></td><td></td><td></td></tr>"
+        "<tr><td>Engineering lead</td><td></td><td></td><td></td></tr></table>"
+        "<p><em>The generated decision is a recommendation from the rules above; "
+        "the accountable owners make the release call.</em></p></div>"
+        "</body></html>")
+    return "\n".join(parts) + "\n"

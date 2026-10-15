@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .scenarios import load_scenarios, to_test_script
-from .signoff import evaluate, load_results, render_markdown
+from .signoff import evaluate, load_results, render_html, render_markdown
 from .traces import load_tool_calls
 
 
@@ -34,6 +34,8 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--results", required=True, type=Path)
     g.add_argument("--min-pass-rate", type=float, default=0.9)
     g.add_argument("--out", type=Path)
+    g.add_argument("--format", choices=("md", "html", "auto"), default="auto",
+                   help="report format (auto: .html out → html, else md)")
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
     t = sub.add_parser("trace", help="turn a trace export into a results entry for one run")
     t.add_argument("--trace", required=True, type=Path, help="OTLP/JSON or flat span list")
@@ -59,7 +61,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     data = load_results(a.results)
     ev = evaluate(scenarios, data, a.min_pass_rate)
-    _emit(render_markdown(ev, data.get("run", {})), a.out)
+    fmt = a.format
+    if fmt == "auto":
+        fmt = "html" if a.out and a.out.suffix.lower() == ".html" else "md"
+    body = (render_html if fmt == "html" else render_markdown)(ev, data.get("run", {}))
+    _emit(body, a.out)
     print(f"decision: {ev.decision}", file=sys.stderr)
     return 1 if a.strict and ev.decision != "GO" else 0
 

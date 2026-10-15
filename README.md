@@ -40,8 +40,10 @@ agent-uat signoff  --scenarios examples/support_agent_scenarios.json \
                    --results examples/support_agent_results.json --out reports/signoff.md
 ```
 Add `--strict` to make `signoff` exit 1 unless the decision is GO (useful as a release gate).
-See [`examples/sample_signoff.md`](examples/sample_signoff.md): the synthetic run is a
-**NO-GO** because the agent acted on a prompt injection in 1 of 3 runs.
+See [`examples/sample_signoff.md`](examples/sample_signoff.md) (and the print-friendly
+[`examples/sample_signoff.html`](examples/sample_signoff.html)): the synthetic run is a
+**NO-GO** because the agent acted on a prompt injection in 1 of 3 runs. Pass `--format html`
+or an `--out` path ending in `.html` for the HTML report.
 
 ### Filling `actual_tool_calls` from traces
 
@@ -99,7 +101,8 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 - ~~Fill `actual_tool_calls` from OpenTelemetry traces~~ (done: `agent-uat trace`); Langfuse export next
 - ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
 - ~~Multi-run statistics per scenario~~ (done: pass/fail/blocked counts, pass rate, unstable flag)
-- HTML sign-off report and a traceability link to defect trackers
+- ~~HTML sign-off report~~ (done: `agent-uat signoff --format html` or `--out ….html`)
+- Traceability link to defect trackers
 
 ## License
 MIT © Ravin Elango

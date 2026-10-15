@@ -143,3 +143,23 @@ def test_multi_run_section_in_example_report(tmp_path):
     assert "## Multi-run statistics" in md
     assert "| INJ-01 | 3 | 2 | 1 | 0 | 67% | no |" in md
     assert "unstable across runs" in md
+
+
+def test_html_signoff_report(tmp_path):
+    out = tmp_path / "signoff.html"
+    rc = main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
+               "--results", str(EX / "support_agent_results.json"), "--out", str(out)])
+    assert rc == 0
+    doc = out.read_text()
+    assert doc.startswith("<!doctype html>")
+    assert "NO-GO" in doc and "SYNTHETIC" in doc and "D-101" in doc and "INJ-01" in doc
+    assert "Multi-run statistics" in doc
+    assert "print-color-adjust" in doc or "@media print" in doc
+
+
+def test_format_flag_forces_html_without_html_suffix(tmp_path):
+    out = tmp_path / "signoff.txt"
+    assert main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
+                 "--results", str(EX / "support_agent_results.json"),
+                 "--format", "html", "--out", str(out)]) == 0
+    assert out.read_text().startswith("<!doctype html>")
