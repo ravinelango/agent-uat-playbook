@@ -38,14 +38,18 @@ def main(argv: list[str] | None = None) -> int:
                    help="report format (auto: .html out → html, else md)")
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
     t = sub.add_parser("trace", help="turn a trace export into a results entry for one run")
-    t.add_argument("--trace", required=True, type=Path, help="OTLP/JSON or flat span list")
+    t.add_argument("--trace", required=True, type=Path,
+                   help="OTLP/JSON, flat span list, or Langfuse-like observations export")
     t.add_argument("--scenario-id", required=True)
-    t.add_argument("--session", help="keep only spans with this session.id")
+    t.add_argument("--session", help="keep only spans/observations with this session.id")
     t.add_argument("--with-args", action="store_true", help="include tool-call arguments")
+    t.add_argument("--format", choices=("auto", "otlp", "langfuse"), default="auto",
+                   dest="trace_format",
+                   help="trace export format (default: auto-detect)")
     a = p.parse_args(argv)
 
     if a.cmd == "trace":
-        calls = load_tool_calls(a.trace, a.session)
+        calls = load_tool_calls(a.trace, a.session, fmt=a.trace_format)
         entry = {"scenario_id": a.scenario_id, "actual_tool_calls": [c.name for c in calls]}
         if a.with_args:
             entry["tool_call_details"] = [{"name": c.name, "arguments": c.arguments}

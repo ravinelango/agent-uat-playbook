@@ -48,17 +48,23 @@ or an `--out` path ending in `.html` for the HTML report.
 ### Filling `actual_tool_calls` from traces
 
 If the agent is instrumented with OpenTelemetry (GenAI semantic conventions, `execute_tool`
-spans), let the trace say which tools ran instead of copying them by hand:
+spans) or you have a **Langfuse-like** JSON export (`observations` with tool markers), let
+the trace say which tools ran instead of copying them by hand:
 
 ```bash
 agent-uat trace --trace examples/traces/support_agent_otlp.json \
   --scenario-id REF-01 --session run-1
+
+# Langfuse-like synthetic export (auto-detected, or pass --format langfuse)
+agent-uat trace --trace examples/traces/support_agent_langfuse.json \
+  --scenario-id REF-01 --session run-1 --format langfuse
 ```
 
 This prints a results entry (`scenario_id` + `actual_tool_calls` in start-time order) to
 paste or merge into your results file. Add `--with-args` to include each call's arguments
 (`tool_call_details`), which the argument checks below use.
-The bundled trace is a hand-written synthetic example.
+The bundled traces are hand-written **synthetic** examples (OTLP and Langfuse-like), not
+real production dumps.
 
 ### Tool-call order and argument checks
 
@@ -98,7 +104,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 **No real agent UAT results are published here.**
 
 ## Roadmap
-- ~~Fill `actual_tool_calls` from OpenTelemetry traces~~ (done: `agent-uat trace`); Langfuse export next
+- ~~Fill `actual_tool_calls` from OpenTelemetry / Langfuse-like traces~~ (done: `agent-uat trace`, `--format auto|otlp|langfuse`)
 - ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
 - ~~Multi-run statistics per scenario~~ (done: pass/fail/blocked counts, pass rate, unstable flag)
 - ~~HTML sign-off report~~ (done: `agent-uat signoff --format html` or `--out ….html`)

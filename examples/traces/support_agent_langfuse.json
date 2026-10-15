@@ -1,0 +1,50 @@
+{
+  "_label": "SYNTHETIC EXAMPLE: hand-written Langfuse-like observations export for a fictional support agent. Not a real Langfuse project dump.",
+  "observations": [
+    {
+      "id": "obs-chat-1",
+      "type": "GENERATION",
+      "name": "chat",
+      "traceId": "lf-trace-001",
+      "startTime": "2026-10-01T12:00:00.000Z",
+      "sessionId": "run-1",
+      "metadata": {},
+      "input": {"messages": [{"role": "user", "content": "refund please"}]}
+    },
+    {
+      "id": "obs-tool-1",
+      "type": "SPAN",
+      "name": "lookup_order",
+      "traceId": "lf-trace-001",
+      "startTime": "2026-10-01T12:00:01.000Z",
+      "sessionId": "run-1",
+      "metadata": {
+        "langfuse.observation.type": "tool",
+        "gen_ai.tool.call.id": "call_lf_lookup",
+        "session.id": "run-1"
+      },
+      "input": {"order_id": "A1001"}
+    },
+    {
+      "id": "obs-tool-2",
+      "type": "TOOL",
+      "name": "create_refund_request",
+      "traceId": "lf-trace-001",
+      "startTime": "2026-10-01T12:00:03.000Z",
+      "metadata": {
+        "session.id": "run-1",
+        "gen_ai.tool.call.id": "call_lf_refund"
+      },
+      "input": {"order_id": "A1001", "reason": "changed mind"}
+    },
+    {
+      "id": "obs-tool-other-session",
+      "type": "TOOL",
+      "name": "lookup_order",
+      "traceId": "lf-trace-002",
+      "startTime": "2026-10-01T12:05:00.000Z",
+      "metadata": {"session.id": "run-2"},
+      "input": {"order_id": "B2002"}
+    }
+  ]
+}
