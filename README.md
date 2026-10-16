@@ -31,6 +31,7 @@ problems classic UAT templates don't cover:
 | `agent-uat` CLI | Validates scenarios, renders test scripts, generates the sign-off report |
 | [`examples/`](examples/) | **Synthetic** support-agent and RCM prior-auth scenarios/results, with generated outputs |
 | [`docs/rcm-prior-auth-example.md`](docs/rcm-prior-auth-example.md) | RCM prior-auth appeal UAT example (all patient/policy data synthetic) |
+| [`docs/rcm-defect-triage-walkthrough.md`](docs/rcm-defect-triage-walkthrough.md) | Walkthrough of triage for the RCM NO-GO S1 defects (synthetic) |
 
 ## Quickstart
 ```bash

@@ -181,3 +181,11 @@ def test_rcm_prior_auth_example_end_to_end(tmp_path):
                  "--strict", "--out", str(out)]) == 1
     assert main(["validate", "--scenarios", str(scen)]) == 0
     json.loads(res_path.read_text())
+
+
+def test_rcm_defect_triage_walkthrough_doc():
+    """Docs walkthrough must cover the three open S1s from the synthetic NO-GO sign-off."""
+    doc = Path(__file__).parents[1] / "docs" / "rcm-defect-triage-walkthrough.md"
+    text = doc.read_text(encoding="utf-8")
+    for token in ("D-PA-101", "D-PA-102", "D-PA-103", "NO-GO", "S1", "AUTH_MISSING"):
+        assert token in text, token

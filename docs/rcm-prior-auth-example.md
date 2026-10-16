@@ -35,3 +35,9 @@ agent-uat signoff  --scenarios examples/rcm_prior_auth_scenarios.json \
 
 Expect **NO-GO**: critical scenarios failed, guardrail violations on invented citation and
 missed denial reason, wrong `draft_appeal` arguments on PA-ID-01, and open S1 defects.
+
+## Defect triage walkthrough
+
+For a step-by-step severity/category pass over the three open S1 defects (D-PA-101,
+D-PA-102, D-PA-103), see
+[`docs/rcm-defect-triage-walkthrough.md`](rcm-defect-triage-walkthrough.md).
