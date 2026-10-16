@@ -1,7 +1,7 @@
 # agent-uat-playbook
 
 [![CI](https://github.com/ravinelango/agent-uat-playbook/actions/workflows/ci.yml/badge.svg)](https://github.com/ravinelango/agent-uat-playbook/actions/workflows/ci.yml)
-![status](https://img.shields.io/badge/status-early%20(v0.1)-orange)
+![status](https://img.shields.io/badge/status-early%20(v0.2)-orange)
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 **User acceptance testing (UAT) for AI agents:** acceptance criteria a business user can sign,
@@ -118,7 +118,7 @@ scenario is unstable across runs (mixed pass/fail/blocked).
 **GO** otherwise.
 
 ## Status
-**Early, v0.1.** The format, templates, guide and CLI work and are tested. The example
+**Early, v0.2.** The format, templates, guide and CLI work and are tested. The example
 agent, scenarios and results are **synthetic** and exist only to demonstrate the format.
 **No real agent UAT results are published here.**
 

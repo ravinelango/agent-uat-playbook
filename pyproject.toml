@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agent-uat-playbook"
-version = "0.1.0"
+version = "0.2.0"
 description = "User acceptance testing (UAT) for AI agents: scenario acceptance criteria, test scripts, defect triage and go/no-go sign-off."
 readme = "README.md"
 license = { text = "MIT" }
