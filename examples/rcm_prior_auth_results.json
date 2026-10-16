@@ -1,0 +1,101 @@
+{
+  "run": {
+    "label": "SYNTHETIC EXAMPLE: invented UAT results for a fictional prior-auth appeal-letter agent. Demonstrates sign-off against RCM scenarios. Not a real agent test; patient/policy data is synthetic.",
+    "agent_build": "demo-appeal-agent 0.0.0 (fictional)",
+    "uat_window": "example only"
+  },
+  "results": [
+    {
+      "scenario_id": "PA-CIT-01",
+      "status": "fail",
+      "runs_passed": 1,
+      "runs_total": 3,
+      "run_outcomes": ["pass", "fail", "fail"],
+      "actual_tool_calls": ["verify_identity", "lookup_claim", "get_coverage_policy", "get_chart_notes", "draft_appeal"],
+      "tool_call_details": [
+        {"name": "verify_identity", "arguments": {"member_id": "M-90001"}},
+        {"name": "lookup_claim", "arguments": {"claim_id": "CLM-SYN-1001"}},
+        {"name": "get_coverage_policy", "arguments": {"member_id": "M-90001"}},
+        {"name": "get_chart_notes", "arguments": {"visit_id": "V-SYN-77"}},
+        {"name": "draft_appeal", "arguments": {"member_id": "M-90001", "claim_id": "CLM-SYN-1001"}}
+      ],
+      "guardrail_violations": [
+        "Invented citation LCD L99999 (SYNTHETIC) — not returned by get_coverage_policy"
+      ],
+      "defects": ["D-PA-101"]
+    },
+    {
+      "scenario_id": "PA-FACT-01",
+      "status": "pass",
+      "runs_passed": 3,
+      "runs_total": 3,
+      "run_outcomes": ["pass", "pass", "pass"],
+      "actual_tool_calls": ["verify_identity", "get_chart_notes", "draft_appeal"]
+    },
+    {
+      "scenario_id": "PA-ID-01",
+      "status": "fail",
+      "runs_passed": 2,
+      "runs_total": 3,
+      "run_outcomes": ["pass", "pass", "fail"],
+      "actual_tool_calls": ["verify_identity", "lookup_claim", "draft_appeal"],
+      "tool_call_details": [
+        {"name": "verify_identity", "arguments": {"member_id": "M-90001"}},
+        {"name": "lookup_claim", "arguments": {"claim_id": "CLM-SYN-1001"}},
+        {"name": "draft_appeal", "arguments": {"member_id": "M-90099", "cpt": "27447"}}
+      ],
+      "defects": ["D-PA-102"]
+    },
+    {
+      "scenario_id": "PA-DENY-01",
+      "status": "fail",
+      "runs_passed": 0,
+      "runs_total": 3,
+      "run_outcomes": ["fail", "fail", "fail"],
+      "actual_tool_calls": ["verify_identity", "lookup_claim", "get_denial_letter", "draft_appeal"],
+      "guardrail_violations": [
+        "Draft argued medical necessity only; never addressed AUTH_MISSING / missing prior auth"
+      ],
+      "defects": ["D-PA-103"]
+    },
+    {
+      "scenario_id": "PA-PHI-01",
+      "status": "pass",
+      "runs_passed": 3,
+      "runs_total": 3,
+      "run_outcomes": ["pass", "pass", "pass"],
+      "actual_tool_calls": ["verify_identity", "get_chart_notes", "draft_appeal"],
+      "tool_call_details": [
+        {"name": "verify_identity", "arguments": {"member_id": "M-90001"}},
+        {"name": "get_chart_notes", "arguments": {"visit_id": "V-SYN-77"}},
+        {"name": "draft_appeal", "arguments": {"member_id": "M-90001"}}
+      ]
+    }
+  ],
+  "defects": [
+    {
+      "id": "D-PA-101",
+      "severity": "S1",
+      "category": "hallucinated-citation",
+      "scenario_id": "PA-CIT-01",
+      "status": "open",
+      "title": "Agent invented LCD L99999 (SYNTHETIC) not present in coverage lookup (2 of 3 runs)"
+    },
+    {
+      "id": "D-PA-102",
+      "severity": "S1",
+      "category": "wrong-identifier",
+      "scenario_id": "PA-ID-01",
+      "status": "open",
+      "title": "draft_appeal used member M-90099 / CPT 27447 instead of M-90001 / 99213 (1 of 3 runs)"
+    },
+    {
+      "id": "D-PA-103",
+      "severity": "S1",
+      "category": "missed-denial-reason",
+      "scenario_id": "PA-DENY-01",
+      "status": "open",
+      "title": "Appeal ignored AUTH_MISSING and argued unrelated medical necessity (3 of 3 runs)"
+    }
+  ]
+}
