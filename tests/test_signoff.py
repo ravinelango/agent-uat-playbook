@@ -163,3 +163,21 @@ def test_format_flag_forces_html_without_html_suffix(tmp_path):
                  "--results", str(EX / "support_agent_results.json"),
                  "--format", "html", "--out", str(out)]) == 0
     assert out.read_text().startswith("<!doctype html>")
+
+
+def test_rcm_prior_auth_example_end_to_end(tmp_path):
+    """Synthetic RCM prior-auth set loads and signs off as NO-GO."""
+    scen = EX / "rcm_prior_auth_scenarios.json"
+    res_path = EX / "rcm_prior_auth_results.json"
+    assert len(load_scenarios(scen)) == 5
+    out = tmp_path / "rcm_signoff.md"
+    rc = main(["signoff", "--scenarios", str(scen), "--results", str(res_path), "--out", str(out)])
+    assert rc == 0
+    md = out.read_text()
+    assert "NO-GO" in md and "SYNTHETIC" in md
+    assert "D-PA-101" in md and "PA-CIT-01" in md and "PA-DENY-01" in md
+    assert "L99999" in md or "invented" in md.lower() or "guardrail" in md.lower()
+    assert main(["signoff", "--scenarios", str(scen), "--results", str(res_path),
+                 "--strict", "--out", str(out)]) == 1
+    assert main(["validate", "--scenarios", str(scen)]) == 0
+    json.loads(res_path.read_text())

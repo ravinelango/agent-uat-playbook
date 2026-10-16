@@ -29,7 +29,8 @@ problems classic UAT templates don't cover:
 | [`templates/test-script-template.md`](templates/test-script-template.md) | Business-user test script template |
 | [`docs/defect-triage-guide.md`](docs/defect-triage-guide.md) | Severity (S1-S4), agent defect categories, non-determinism rules |
 | `agent-uat` CLI | Validates scenarios, renders test scripts, generates the sign-off report |
-| [`examples/`](examples/) | **Synthetic** support-agent scenarios and results, with generated outputs |
+| [`examples/`](examples/) | **Synthetic** support-agent and RCM prior-auth scenarios/results, with generated outputs |
+| [`docs/rcm-prior-auth-example.md`](docs/rcm-prior-auth-example.md) | RCM prior-auth appeal UAT example (all patient/policy data synthetic) |
 
 ## Quickstart
 ```bash
@@ -44,6 +45,23 @@ See [`examples/sample_signoff.md`](examples/sample_signoff.md) (and the print-fr
 [`examples/sample_signoff.html`](examples/sample_signoff.html)): the synthetic run is a
 **NO-GO** because the agent acted on a prompt injection in 1 of 3 runs. Pass `--format html`
 or an `--out` path ending in `.html` for the HTML report.
+
+### RCM prior-auth appeal example (synthetic)
+
+A second fixture set signs off an LLM **prior-authorization appeal-letter** agent
+(citation, chart-fact, wrong member/CPT, missed denial reason, PHI/identity):
+
+```bash
+agent-uat validate --scenarios examples/rcm_prior_auth_scenarios.json
+agent-uat signoff  --scenarios examples/rcm_prior_auth_scenarios.json \
+                   --results examples/rcm_prior_auth_results.json \
+                   --out examples/rcm_prior_auth_signoff.md
+```
+
+See [`docs/rcm-prior-auth-example.md`](docs/rcm-prior-auth-example.md) and
+[`examples/rcm_prior_auth_signoff.md`](examples/rcm_prior_auth_signoff.md): the synthetic
+run is a **NO-GO** (invented LCD citation, wrong identifiers, missed `AUTH_MISSING`).
+Member IDs, claims, CPT codes, and policy numbers are fixtures — not real PHI.
 
 ### Filling `actual_tool_calls` from traces
 
