@@ -42,6 +42,10 @@ agent-uat signoff  --scenarios examples/support_agent_scenarios.json \
                    --results examples/support_agent_results.json --out reports/signoff.md
 ```
 Add `--strict` to make `signoff` exit 1 unless the decision is GO (useful as a release gate).
+To link open defects to your tracker, give a defect a `url` in the results file, or pass
+`--defect-url-template 'https://tracker.example/browse/{id}'` to build one from its ID
+(defects that already have a `url` keep it). Defect IDs then render as links in both the
+Markdown and HTML reports.
 See [`examples/sample_signoff.md`](examples/sample_signoff.md) (and the print-friendly
 [`examples/sample_signoff.html`](examples/sample_signoff.html)): the synthetic run is a
 **NO-GO** because the agent acted on a prompt injection in 1 of 3 runs. Pass `--format html`
@@ -127,7 +131,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 - ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
 - ~~Multi-run statistics per scenario~~ (done: pass/fail/blocked counts, pass rate, unstable flag)
 - ~~HTML sign-off report~~ (done: `agent-uat signoff --format html` or `--out ….html`)
-- Traceability link to defect trackers
+- ~~Traceability link to defect trackers~~ (done: defect `url`, `--defect-url-template`)
 
 ## License
 MIT © Ravin Elango
