@@ -189,3 +189,45 @@ def test_rcm_defect_triage_walkthrough_doc():
     text = doc.read_text(encoding="utf-8")
     for token in ("D-PA-101", "D-PA-102", "D-PA-103", "NO-GO", "S1", "AUTH_MISSING"):
         assert token in text, token
+
+
+def test_defect_url_renders_as_link_in_markdown_and_html():
+    from agent_uat.signoff import render_html, render_markdown
+
+    data = {"results": [res("A")],
+            "defects": [{"id": "D-1", "severity": "S4", "url": "https://tracker.example/D-1"}]}
+    ev = evaluate([sc("A")], data)
+    assert "| [D-1](https://tracker.example/D-1) | S4 |" in render_markdown(ev, {})
+    assert "<a href='https://tracker.example/D-1'>D-1</a>" in render_html(ev, {})
+
+
+def test_defect_url_template_fills_missing_urls_only():
+    from agent_uat.signoff import apply_defect_url_template
+
+    data = {"defects": [{"id": "D 1", "severity": "S3"},
+                        {"id": "D2", "severity": "S3", "url": "https://other.example/2"}]}
+    apply_defect_url_template(data, "https://tracker.example/browse/{id}")
+    assert data["defects"][0]["url"] == "https://tracker.example/browse/D%201"
+    assert data["defects"][1]["url"] == "https://other.example/2"
+
+
+def test_defect_url_must_be_http(tmp_path):
+    import pytest
+
+    from agent_uat.signoff import apply_defect_url_template, load_results
+
+    p = tmp_path / "r.json"
+    p.write_text(json.dumps({"results": [], "defects": [
+        {"id": "D1", "severity": "S3", "url": "javascript:alert(1)"}]}))
+    with pytest.raises(ValueError, match="url must start with http"):
+        load_results(p)
+    with pytest.raises(ValueError, match="containing {id}"):
+        apply_defect_url_template({"defects": []}, "https://tracker.example/browse")
+
+
+def test_cli_defect_url_template(tmp_path):
+    out = tmp_path / "signoff.md"
+    main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
+          "--results", str(EX / "support_agent_results.json"), "--out", str(out),
+          "--defect-url-template", "https://tracker.example/browse/{id}"])
+    assert "[D-101](https://tracker.example/browse/D-101)" in out.read_text()

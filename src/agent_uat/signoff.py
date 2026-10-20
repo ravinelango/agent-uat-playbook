@@ -22,6 +22,7 @@ import html
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import quote
 
 from .scenarios import Scenario
 
@@ -72,6 +73,28 @@ def load_results(path: str | Path) -> dict:
     for d in data.get("defects", []):
         if d.get("severity") not in SEVERITIES:
             raise ValueError(f"defect {d.get('id')}: severity must be one of {SEVERITIES}")
+        if "url" in d and not _is_http_url(d["url"]):
+            raise ValueError(f"defect {d.get('id')}: url must start with http:// or https://")
+    return data
+
+
+def _is_http_url(value: object) -> bool:
+    return isinstance(value, str) and value.startswith(("http://", "https://"))
+
+
+def apply_defect_url_template(data: dict, template: str | None) -> dict:
+    """Give each defect without a ``url`` a tracker link built from ``template``.
+
+    ``template`` holds an ``{id}`` placeholder, e.g. ``https://tracker.example/browse/{id}``.
+    Defects that already carry a ``url`` keep it. The data dict is updated in place.
+    """
+    if not template:
+        return data
+    if "{id}" not in template or not _is_http_url(template):
+        raise ValueError("defect URL template must be an http(s) URL containing {id}")
+    for d in data.get("defects", []):
+        if not d.get("url"):
+            d["url"] = template.replace("{id}", quote(str(d["id"]), safe=""))
     return data
 
 
@@ -233,6 +256,17 @@ def _fmt_rate(rate: float | None) -> str:
     return "-" if rate is None else f"{rate:.0%}"
 
 
+def _md_defect_id(d: dict) -> str:
+    return f"[{d['id']}]({d['url']})" if d.get("url") else str(d["id"])
+
+
+def _html_defect_id(d: dict) -> str:
+    ident = html.escape(str(d["id"]))
+    if d.get("url"):
+        return f"<a href='{html.escape(d['url'], quote=True)}'>{ident}</a>"
+    return ident
+
+
 def render_markdown(ev: Evaluation, run: dict) -> str:
     lines = ["# UAT go/no-go sign-off", ""]
     if run.get("label"):
@@ -270,7 +304,7 @@ def render_markdown(ev: Evaluation, run: dict) -> str:
     lines += ["", "## Open defects", ""]
     if ev.open_defects:
         lines += ["| ID | Severity | Category | Scenario | Title |", "|---|---|---|---|---|"]
-        lines += [f"| {d['id']} | {d['severity']} | {d.get('category', '-')} | "
+        lines += [f"| {_md_defect_id(d)} | {d['severity']} | {d.get('category', '-')} | "
                   f"{d.get('scenario_id', '-')} | {d.get('title', '')} |" for d in ev.open_defects]
     else:
         lines.append("None.")
@@ -368,7 +402,7 @@ def render_html(ev: Evaluation, run: dict) -> str:
                      "<th>Scenario</th><th>Title</th></tr>")
         for d in ev.open_defects:
             parts.append(
-                f"<tr><td>{e(d['id'])}</td><td>{e(d['severity'])}</td>"
+                f"<tr><td>{_html_defect_id(d)}</td><td>{e(d['severity'])}</td>"
                 f"<td>{e(str(d.get('category', '-')))}</td>"
                 f"<td>{e(str(d.get('scenario_id', '-')))}</td>"
                 f"<td>{e(str(d.get('title', '')))}</td></tr>")

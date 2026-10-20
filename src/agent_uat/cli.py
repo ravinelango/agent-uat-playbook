@@ -8,7 +8,13 @@ import sys
 from pathlib import Path
 
 from .scenarios import load_scenarios, to_test_script
-from .signoff import evaluate, load_results, render_html, render_markdown
+from .signoff import (
+    apply_defect_url_template,
+    evaluate,
+    load_results,
+    render_html,
+    render_markdown,
+)
 from .traces import load_tool_calls
 
 
@@ -37,6 +43,9 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--format", choices=("md", "html", "auto"), default="auto",
                    help="report format (auto: .html out → html, else md)")
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
+    g.add_argument("--defect-url-template", metavar="URL",
+                   help="link defects without a url to a tracker, e.g. "
+                        "https://tracker.example/browse/{id}")
     t = sub.add_parser("trace", help="turn a trace export into a results entry for one run")
     t.add_argument("--trace", required=True, type=Path,
                    help="OTLP/JSON, flat span list, or Langfuse-like observations export")
@@ -63,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "script":
         _emit(to_test_script(scenarios), a.out)
         return 0
-    data = load_results(a.results)
+    data = apply_defect_url_template(load_results(a.results), a.defect_url_template)
     ev = evaluate(scenarios, data, a.min_pass_rate)
     fmt = a.format
     if fmt == "auto":
