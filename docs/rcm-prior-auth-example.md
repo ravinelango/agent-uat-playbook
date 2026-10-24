@@ -12,8 +12,9 @@ results for signing off an LLM **prior-authorization appeal-letter** agent in a 
 
 ## Failure modes covered
 
-These mirror the checkers in the separate **prior-auth-appeal-eval** project (not required to
-run this example):
+These mirror the checkers in the separate
+[**prior-auth-appeal-eval**](https://github.com/ravinelango/prior-auth-appeal-eval) project
+(not required to run this example):
 
 1. **Invented coverage citation** — draft cites an LCD/NCD/policy ID that tools never returned.
 2. **Chart fact not in record** — draft asserts imaging, failed therapy, or labs absent from notes.
