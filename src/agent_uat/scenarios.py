@@ -55,13 +55,17 @@ def parse_scenario(d: dict) -> Scenario:
     priority = str(d.get("priority", "medium")).lower()
     if priority not in PRIORITIES:
         raise ValueError(f"scenario {d['id']}: priority must be one of {PRIORITIES}")
+    ordered = d.get("ordered_tool_calls", False)
+    if not isinstance(ordered, bool):
+        raise ValueError(f"scenario {d['id']}: ordered_tool_calls must be true or false, "
+                         f"got {ordered!r}")
     s = Scenario(
         id=str(d["id"]), title=str(d["title"]), priority=priority,
         given=_as_list(d["given"]), when=str(d["when"]), then=_as_list(d["then"]),
         expected_tool_calls=_as_list(d.get("expected_tool_calls")),
         forbidden_tool_calls=_as_list(d.get("forbidden_tool_calls")),
         guardrails=_as_list(d.get("guardrails")),
-        ordered_tool_calls=bool(d.get("ordered_tool_calls", False)),
+        ordered_tool_calls=ordered,
         tool_argument_checks=_parse_arg_checks(str(d["id"]), d.get("tool_argument_checks")),
     )
     if s.ordered_tool_calls and len(s.expected_tool_calls) < 2:

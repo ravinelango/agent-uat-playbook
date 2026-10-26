@@ -51,6 +51,13 @@ def test_ordered_and_argument_check_validation():
     assert s.ordered_tool_calls and s.tool_argument_checks[0]["args"] == {"k": 1}
 
 
+@pytest.mark.parametrize("value", ["false", "true", 0, 1, None])
+def test_ordered_tool_calls_must_be_a_real_boolean(value):
+    # bool("false") is True, so a quoted flag used to silently turn ordering on
+    with pytest.raises(ValueError, match="true or false"):
+        parse_scenario({**BASE, "expected_tool_calls": ["a", "b"], "ordered_tool_calls": value})
+
+
 @pytest.mark.parametrize("payload", [{"items": []}, {"scenarios": "S1"}, "S1", 3])
 def test_load_rejects_wrong_top_level_shape(tmp_path, payload):
     p = tmp_path / "s.json"
