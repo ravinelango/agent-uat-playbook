@@ -49,3 +49,19 @@ def test_ordered_and_argument_check_validation():
     s = parse_scenario({**base, "expected_tool_calls": ["a", "b"], "ordered_tool_calls": True,
                         "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}]})
     assert s.ordered_tool_calls and s.tool_argument_checks[0]["args"] == {"k": 1}
+
+
+@pytest.mark.parametrize("payload", [{"items": []}, {"scenarios": "S1"}, "S1", 3])
+def test_load_rejects_wrong_top_level_shape(tmp_path, payload):
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(payload))
+    with pytest.raises(ValueError, match="list of scenarios"):
+        load_scenarios(p)
+
+
+@pytest.mark.parametrize("entry", ["S1", None, ["S1"], 7])
+def test_load_rejects_non_object_scenario(tmp_path, entry):
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps([BASE, entry]))
+    with pytest.raises(ValueError, match="JSON object"):
+        load_scenarios(p)

@@ -47,6 +47,8 @@ def _as_list(v) -> list[str]:
 
 
 def parse_scenario(d: dict) -> Scenario:
+    if not isinstance(d, dict):
+        raise ValueError(f"each scenario must be a JSON object, got {type(d).__name__}")
     missing = [k for k in ("id", "title", "given", "when", "then") if not d.get(k)]
     if missing:
         raise ValueError(f"scenario {d.get('id', '?')}: missing {', '.join(missing)}")
@@ -75,7 +77,10 @@ def parse_scenario(d: dict) -> Scenario:
 
 def load_scenarios(path: str | Path) -> list[Scenario]:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
-    items = data["scenarios"] if isinstance(data, dict) else data
+    items = data.get("scenarios") if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        raise ValueError(f"{path}: expected a list of scenarios or an object with a "
+                         "'scenarios' list")
     out = [parse_scenario(d) for d in items]
     ids = [s.id for s in out]
     dupes = sorted({i for i in ids if ids.count(i) > 1})
