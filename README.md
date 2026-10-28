@@ -42,6 +42,7 @@ agent-uat signoff  --scenarios examples/support_agent_scenarios.json \
                    --results examples/support_agent_results.json --out reports/signoff.md
 ```
 Add `--strict` to make `signoff` exit 1 unless the decision is GO (useful as a release gate).
+Any command exits 2 with a `no such file` message when a `--scenarios`, `--results`, or `--trace` path does not exist.
 To link open defects to your tracker, give a defect a `url` in the results file, or pass
 `--defect-url-template 'https://tracker.example/browse/{id}'` to build one from its ID
 (defects that already have a `url` keep it). Defect IDs then render as links in both the
