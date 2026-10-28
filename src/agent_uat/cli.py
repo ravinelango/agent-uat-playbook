@@ -57,6 +57,12 @@ def main(argv: list[str] | None = None) -> int:
                    help="trace export format (default: auto-detect)")
     a = p.parse_args(argv)
 
+    for flag in ("scenarios", "results", "trace"):
+        path = getattr(a, flag, None)
+        if path is not None and not path.is_file():
+            print(f"agent-uat: error: no such file for --{flag}: {path}", file=sys.stderr)
+            return 2
+
     if a.cmd == "trace":
         calls = load_tool_calls(a.trace, a.session, fmt=a.trace_format)
         entry = {"scenario_id": a.scenario_id, "actual_tool_calls": [c.name for c in calls]}
