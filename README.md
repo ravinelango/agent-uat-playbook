@@ -43,6 +43,7 @@ agent-uat signoff  --scenarios examples/support_agent_scenarios.json \
 ```
 Add `--strict` to make `signoff` exit 1 unless the decision is GO (useful as a release gate).
 Any command exits 2 with a `no such file` message when a `--scenarios`, `--results`, or `--trace` path does not exist.
+Run `agent-uat --version` to record the tool version next to a sign-off report.
 To link open defects to your tracker, give a defect a `url` in the results file, or pass
 `--defect-url-template 'https://tracker.example/browse/{id}'` to build one from its ID
 (defects that already have a `url` keep it). Defect IDs then render as links in both the
