@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .scenarios import load_scenarios, to_test_script
 from .signoff import (
     apply_defect_url_template,
@@ -29,6 +30,7 @@ def _emit(text: str, out: Path | None) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="agent-uat", description=__doc__)
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
     v = sub.add_parser("validate", help="check a scenarios file")
     v.add_argument("--scenarios", required=True, type=Path)

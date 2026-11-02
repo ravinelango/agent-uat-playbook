@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from agent_uat import __version__
 from agent_uat.cli import main
 
 EX = Path(__file__).resolve().parents[1] / "examples"
@@ -28,3 +29,10 @@ def test_missing_input_file_exits_2(argv, tmp_path, monkeypatch, capsys):
     err = capsys.readouterr().err
     assert "no such file" in err
     assert "nope.json" in err
+
+
+def test_version_flag_prints_package_version(capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == f"agent-uat {__version__}"
