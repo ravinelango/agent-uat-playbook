@@ -44,10 +44,21 @@ def test_ordered_and_argument_check_validation():
     with pytest.raises(ValueError, match="non-empty 'args'"):
         parse_scenario({**base, "tool_argument_checks": [{"tool": "a", "args": {}}]})
     with pytest.raises(ValueError, match="forbidden"):
-        parse_scenario({**base, "forbidden_tool_calls": ["a"],
-                        "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}]})
-    s = parse_scenario({**base, "expected_tool_calls": ["a", "b"], "ordered_tool_calls": True,
-                        "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}]})
+        parse_scenario(
+            {
+                **base,
+                "forbidden_tool_calls": ["a"],
+                "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}],
+            }
+        )
+    s = parse_scenario(
+        {
+            **base,
+            "expected_tool_calls": ["a", "b"],
+            "ordered_tool_calls": True,
+            "tool_argument_checks": [{"tool": "a", "args": {"k": 1}}],
+        }
+    )
     assert s.ordered_tool_calls and s.tool_argument_checks[0]["args"] == {"k": 1}
 
 

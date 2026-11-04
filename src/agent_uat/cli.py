@@ -42,21 +42,35 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--results", required=True, type=Path)
     g.add_argument("--min-pass-rate", type=float, default=0.9)
     g.add_argument("--out", type=Path)
-    g.add_argument("--format", choices=("md", "html", "auto"), default="auto",
-                   help="report format (auto: .html out → html, else md)")
+    g.add_argument(
+        "--format",
+        choices=("md", "html", "auto"),
+        default="auto",
+        help="report format (auto: .html out → html, else md)",
+    )
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
-    g.add_argument("--defect-url-template", metavar="URL",
-                   help="link defects without a url to a tracker, e.g. "
-                        "https://tracker.example/browse/{id}")
+    g.add_argument(
+        "--defect-url-template",
+        metavar="URL",
+        help="link defects without a url to a tracker, e.g. https://tracker.example/browse/{id}",
+    )
     t = sub.add_parser("trace", help="turn a trace export into a results entry for one run")
-    t.add_argument("--trace", required=True, type=Path,
-                   help="OTLP/JSON, flat span list, or Langfuse-like observations export")
+    t.add_argument(
+        "--trace",
+        required=True,
+        type=Path,
+        help="OTLP/JSON, flat span list, or Langfuse-like observations export",
+    )
     t.add_argument("--scenario-id", required=True)
     t.add_argument("--session", help="keep only spans/observations with this session.id")
     t.add_argument("--with-args", action="store_true", help="include tool-call arguments")
-    t.add_argument("--format", choices=("auto", "otlp", "langfuse"), default="auto",
-                   dest="trace_format",
-                   help="trace export format (default: auto-detect)")
+    t.add_argument(
+        "--format",
+        choices=("auto", "otlp", "langfuse"),
+        default="auto",
+        dest="trace_format",
+        help="trace export format (default: auto-detect)",
+    )
     a = p.parse_args(argv)
 
     for flag in ("scenarios", "results", "trace"):
@@ -69,8 +83,7 @@ def main(argv: list[str] | None = None) -> int:
         calls = load_tool_calls(a.trace, a.session, fmt=a.trace_format)
         entry = {"scenario_id": a.scenario_id, "actual_tool_calls": [c.name for c in calls]}
         if a.with_args:
-            entry["tool_call_details"] = [{"name": c.name, "arguments": c.arguments}
-                                          for c in calls]
+            entry["tool_call_details"] = [{"name": c.name, "arguments": c.arguments} for c in calls]
         print(json.dumps(entry, indent=2))
         return 0
     scenarios = load_scenarios(a.scenarios)

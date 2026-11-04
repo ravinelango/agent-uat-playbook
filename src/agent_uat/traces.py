@@ -187,8 +187,7 @@ def extract_tool_calls_otlp(data, session: str | None = None) -> list[ToolCall]:
 def detect_trace_format(data) -> str:
     """Return ``langfuse`` or ``otlp`` for a loaded export."""
     if isinstance(data, dict) and (
-        "observations" in data
-        or (isinstance(data.get("traces"), list) and data.get("traces"))
+        "observations" in data or (isinstance(data.get("traces"), list) and data.get("traces"))
     ):
         # Prefer langfuse when observations exist; a traces list alone is ambiguous
         # but our synthetic Langfuse fixture always includes observations.

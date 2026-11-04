@@ -211,30 +211,42 @@ def evaluate(scenarios: list[Scenario], data: dict, min_pass_rate: float = 0.9) 
                 parts.append(f"{stats.failed} fail")
             if stats.blocked:
                 parts.append(f"{stats.blocked} blocked")
-            conditions.append(
-                f"Scenario {s.id} is unstable across runs ({' / '.join(parts)})"
-            )
+            conditions.append(f"Scenario {s.id} is unstable across runs ({' / '.join(parts)})")
 
         problems = []
-        if r and s.ordered_tool_calls and not missed and not in_order(
-                s.expected_tool_calls, list(r.get("actual_tool_calls", []))):
-            problems.append("expected tools called out of order "
-                            f"(expected {' -> '.join(s.expected_tool_calls)})")
+        if (
+            r
+            and s.ordered_tool_calls
+            and not missed
+            and not in_order(s.expected_tool_calls, list(r.get("actual_tool_calls", [])))
+        ):
+            problems.append(
+                "expected tools called out of order "
+                f"(expected {' -> '.join(s.expected_tool_calls)})"
+            )
         if r and s.tool_argument_checks:
             details = r.get("tool_call_details")
             if details is None:
-                conditions.append(f"Scenario {s.id}: argument checks not verified "
-                                  "(no tool_call_details in result)")
+                conditions.append(
+                    f"Scenario {s.id}: argument checks not verified "
+                    "(no tool_call_details in result)"
+                )
             else:
                 problems += argument_mismatches(s.tool_argument_checks, details)
         for msg in problems:
             target = reasons if s.priority == "critical" else conditions
             target.append(f"Scenario {s.id}: {msg}")
-        rows.append({
-            "id": s.id, "title": s.title, "priority": s.priority, "status": status,
-            "runs": stats.summary(), "stats": stats,
-            "defects": ", ".join(r.get("defects", [])) if r else "",
-        })
+        rows.append(
+            {
+                "id": s.id,
+                "title": s.title,
+                "priority": s.priority,
+                "status": status,
+                "runs": stats.summary(),
+                "stats": stats,
+                "defects": ", ".join(r.get("defects", [])) if r else "",
+            }
+        )
 
     open_defects = [d for d in data.get("defects", []) if d.get("status", "open") == "open"]
     for d in open_defects:
@@ -278,19 +290,32 @@ def render_markdown(ev: Evaluation, run: dict) -> str:
     if ev.conditions:
         lines += ["### Conditions", ""] + [f"- {x}" for x in ev.conditions] + [""]
     c = ev.counts
-    lines += ["## Summary", "",
-              f"Pass rate {ev.pass_rate:.0%} · pass {c['pass']} · fail {c['fail']} · "
-              f"blocked {c['blocked']} · not run {c['not run']}", "",
-              "## Scenario results", "",
-              "| Scenario | Title | Priority | Status | Runs passed | Defects |",
-              "|---|---|---|---|---|---|"]
-    lines += [f"| {r['id']} | {r['title']} | {r['priority']} | {r['status'].upper()} | "
-              f"{r['runs']} | {r['defects'] or '-'} |" for r in ev.rows]
-    lines += ["", "## Multi-run statistics", "",
-              "Per-scenario attempt counts. A scenario is **unstable** when runs disagree "
-              "(pass vs fail/blocked). Any S1 occurrence is still S1.", "",
-              "| Scenario | Runs | Pass | Fail | Blocked | Pass rate | Stable |",
-              "|---|---|---|---|---|---|---|"]
+    lines += [
+        "## Summary",
+        "",
+        f"Pass rate {ev.pass_rate:.0%} · pass {c['pass']} · fail {c['fail']} · "
+        f"blocked {c['blocked']} · not run {c['not run']}",
+        "",
+        "## Scenario results",
+        "",
+        "| Scenario | Title | Priority | Status | Runs passed | Defects |",
+        "|---|---|---|---|---|---|",
+    ]
+    lines += [
+        f"| {r['id']} | {r['title']} | {r['priority']} | {r['status'].upper()} | "
+        f"{r['runs']} | {r['defects'] or '-'} |"
+        for r in ev.rows
+    ]
+    lines += [
+        "",
+        "## Multi-run statistics",
+        "",
+        "Per-scenario attempt counts. A scenario is **unstable** when runs disagree "
+        "(pass vs fail/blocked). Any S1 occurrence is still S1.",
+        "",
+        "| Scenario | Runs | Pass | Fail | Blocked | Pass rate | Stable |",
+        "|---|---|---|---|---|---|---|",
+    ]
     for r in ev.rows:
         st: RunStats = r["stats"]
         if st.runs <= 0:
@@ -304,15 +329,27 @@ def render_markdown(ev: Evaluation, run: dict) -> str:
     lines += ["", "## Open defects", ""]
     if ev.open_defects:
         lines += ["| ID | Severity | Category | Scenario | Title |", "|---|---|---|---|---|"]
-        lines += [f"| {_md_defect_id(d)} | {d['severity']} | {d.get('category', '-')} | "
-                  f"{d.get('scenario_id', '-')} | {d.get('title', '')} |" for d in ev.open_defects]
+        lines += [
+            f"| {_md_defect_id(d)} | {d['severity']} | {d.get('category', '-')} | "
+            f"{d.get('scenario_id', '-')} | {d.get('title', '')} |"
+            for d in ev.open_defects
+        ]
     else:
         lines.append("None.")
-    lines += ["", "## Sign-off", "",
-              "| Role | Name | Decision | Date |", "|---|---|---|---|",
-              "| Business owner | | | |", "| QA / UAT lead | | | |", "| Engineering lead | | | |",
-              "", "_The generated decision is a recommendation from the rules above; "
-              "the accountable owners make the release call._", ""]
+    lines += [
+        "",
+        "## Sign-off",
+        "",
+        "| Role | Name | Decision | Date |",
+        "|---|---|---|---|",
+        "| Business owner | | | |",
+        "| QA / UAT lead | | | |",
+        "| Engineering lead | | | |",
+        "",
+        "_The generated decision is a recommendation from the rules above; "
+        "the accountable owners make the release call._",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -351,8 +388,7 @@ def render_html(ev: Evaluation, run: dict) -> str:
     ]
     if run.get("label"):
         parts.append(f"<p class='banner'><strong>{e(str(run['label']))}</strong></p>")
-    meta = [(k.replace("_", " ").capitalize(), v)
-            for k, v in run.items() if k != "label"]
+    meta = [(k.replace("_", " ").capitalize(), v) for k, v in run.items() if k != "label"]
     if meta:
         parts.append("<ul class='meta'>")
         parts += [f"<li>{e(k)}: {e(str(v))}</li>" for k, v in meta]
@@ -369,43 +405,54 @@ def render_html(ev: Evaluation, run: dict) -> str:
     c = ev.counts
     parts.append(
         f"<h2>Summary</h2><p>Pass rate {ev.pass_rate:.0%} · pass {c['pass']} · "
-        f"fail {c['fail']} · blocked {c['blocked']} · not run {c['not run']}</p>")
-    parts.append("<h2>Scenario results</h2><table><tr>"
-                 "<th>Scenario</th><th>Title</th><th>Priority</th><th>Status</th>"
-                 "<th>Runs passed</th><th>Defects</th></tr>")
+        f"fail {c['fail']} · blocked {c['blocked']} · not run {c['not run']}</p>"
+    )
+    parts.append(
+        "<h2>Scenario results</h2><table><tr>"
+        "<th>Scenario</th><th>Title</th><th>Priority</th><th>Status</th>"
+        "<th>Runs passed</th><th>Defects</th></tr>"
+    )
     for r in ev.rows:
         parts.append(
             f"<tr><td>{e(r['id'])}</td><td>{e(r['title'])}</td><td>{e(r['priority'])}</td>"
             f"<td>{e(r['status'].upper())}</td><td>{e(r['runs'])}</td>"
-            f"<td>{e(r['defects'] or '-')}</td></tr>")
+            f"<td>{e(r['defects'] or '-')}</td></tr>"
+        )
     parts.append("</table>")
     parts.append(
         "<h2>Multi-run statistics</h2>"
         "<p>Per-scenario attempt counts. A scenario is <strong>unstable</strong> when runs "
         "disagree (pass vs fail/blocked). Any S1 occurrence is still S1.</p>"
         "<table><tr><th>Scenario</th><th>Runs</th><th>Pass</th><th>Fail</th>"
-        "<th>Blocked</th><th>Pass rate</th><th>Stable</th></tr>")
+        "<th>Blocked</th><th>Pass rate</th><th>Stable</th></tr>"
+    )
     for r in ev.rows:
         st: RunStats = r["stats"]
         if st.runs <= 0:
-            parts.append(f"<tr><td>{e(r['id'])}</td><td>-</td><td>-</td><td>-</td>"
-                         "<td>-</td><td>-</td><td>-</td></tr>")
+            parts.append(
+                f"<tr><td>{e(r['id'])}</td><td>-</td><td>-</td><td>-</td>"
+                "<td>-</td><td>-</td><td>-</td></tr>"
+            )
         else:
             stable = "no" if st.unstable else "yes"
             parts.append(
                 f"<tr><td>{e(r['id'])}</td><td>{st.runs}</td><td>{st.passed}</td>"
                 f"<td>{st.failed}</td><td>{st.blocked}</td>"
-                f"<td>{e(_fmt_rate(st.pass_rate))}</td><td>{stable}</td></tr>")
+                f"<td>{e(_fmt_rate(st.pass_rate))}</td><td>{stable}</td></tr>"
+            )
     parts.append("</table><h2>Open defects</h2>")
     if ev.open_defects:
-        parts.append("<table><tr><th>ID</th><th>Severity</th><th>Category</th>"
-                     "<th>Scenario</th><th>Title</th></tr>")
+        parts.append(
+            "<table><tr><th>ID</th><th>Severity</th><th>Category</th>"
+            "<th>Scenario</th><th>Title</th></tr>"
+        )
         for d in ev.open_defects:
             parts.append(
                 f"<tr><td>{_html_defect_id(d)}</td><td>{e(d['severity'])}</td>"
                 f"<td>{e(str(d.get('category', '-')))}</td>"
                 f"<td>{e(str(d.get('scenario_id', '-')))}</td>"
-                f"<td>{e(str(d.get('title', '')))}</td></tr>")
+                f"<td>{e(str(d.get('title', '')))}</td></tr>"
+            )
         parts.append("</table>")
     else:
         parts.append("<p>None.</p>")
@@ -417,5 +464,6 @@ def render_html(ev: Evaluation, run: dict) -> str:
         "<tr><td>Engineering lead</td><td></td><td></td><td></td></tr></table>"
         "<p><em>The generated decision is a recommendation from the rules above; "
         "the accountable owners make the release call.</em></p></div>"
-        "</body></html>")
+        "</body></html>"
+    )
     return "\n".join(parts) + "\n"

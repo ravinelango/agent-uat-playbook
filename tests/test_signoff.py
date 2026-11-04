@@ -9,8 +9,9 @@ EX = Path(__file__).parents[1] / "examples"
 
 
 def sc(i, priority="medium", **kw):
-    return parse_scenario({"id": i, "title": i, "given": "g", "when": "w", "then": "t",
-                           "priority": priority, **kw})
+    return parse_scenario(
+        {"id": i, "title": i, "given": "g", "when": "w", "then": "t", "priority": priority, **kw}
+    )
 
 
 def res(i, status="pass", **kw):
@@ -56,35 +57,61 @@ def test_pass_rate_threshold():
 
 def test_example_end_to_end(tmp_path):
     out = tmp_path / "signoff.md"
-    rc = main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-               "--results", str(EX / "support_agent_results.json"), "--out", str(out)])
+    rc = main(
+        [
+            "signoff",
+            "--scenarios",
+            str(EX / "support_agent_scenarios.json"),
+            "--results",
+            str(EX / "support_agent_results.json"),
+            "--out",
+            str(out),
+        ]
+    )
     assert rc == 0
     md = out.read_text()
     assert "NO-GO" in md and "SYNTHETIC" in md and "D-101" in md and "ERR-01" in md
-    assert main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-                 "--results", str(EX / "support_agent_results.json"), "--strict",
-                 "--out", str(out)]) == 1
+    assert (
+        main(
+            [
+                "signoff",
+                "--scenarios",
+                str(EX / "support_agent_scenarios.json"),
+                "--results",
+                str(EX / "support_agent_results.json"),
+                "--strict",
+                "--out",
+                str(out),
+            ]
+        )
+        == 1
+    )
 
 
 def test_example_scenarios_valid_and_script(tmp_path):
     assert len(load_scenarios(EX / "support_agent_scenarios.json")) == 6
     out = tmp_path / "script.md"
-    assert main(["script", "--scenarios", str(EX / "support_agent_scenarios.json"),
-                 "--out", str(out)]) == 0
+    assert (
+        main(["script", "--scenarios", str(EX / "support_agent_scenarios.json"), "--out", str(out)])
+        == 0
+    )
     assert "REF-01" in out.read_text()
     json.loads((EX / "support_agent_results.json").read_text())
 
 
 def test_in_order_allows_calls_in_between():
     from agent_uat.signoff import in_order
+
     assert in_order(["a", "b"], ["a", "x", "b"])
     assert not in_order(["a", "b"], ["b", "a"])
     assert not in_order(["a", "a"], ["a"])
 
 
 def test_out_of_order_blocks_critical_and_conditions_others():
-    kw = {"expected_tool_calls": ["lookup_order", "create_refund_request"],
-          "ordered_tool_calls": True}
+    kw = {
+        "expected_tool_calls": ["lookup_order", "create_refund_request"],
+        "ordered_tool_calls": True,
+    }
     swapped = res("A", actual_tool_calls=["create_refund_request", "lookup_order"])
     ev = evaluate([sc("A", "critical", **kw)], {"results": [swapped]})
     assert ev.decision == "NO-GO" and "out of order" in ev.reasons[0]
@@ -95,27 +122,42 @@ def test_out_of_order_blocks_critical_and_conditions_others():
 
 
 def test_argument_checks_use_tool_call_details():
-    s = sc("A", "critical", expected_tool_calls=["lookup_order"],
-           tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}])
-    good = res("A", actual_tool_calls=["lookup_order"],
-               tool_call_details=[{"name": "lookup_order", "arguments": {"order_id": "A1001",
-                                                                         "fields": "all"}}])
+    s = sc(
+        "A",
+        "critical",
+        expected_tool_calls=["lookup_order"],
+        tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}],
+    )
+    good = res(
+        "A",
+        actual_tool_calls=["lookup_order"],
+        tool_call_details=[
+            {"name": "lookup_order", "arguments": {"order_id": "A1001", "fields": "all"}}
+        ],
+    )
     assert evaluate([s], {"results": [good]}).decision == "GO"
-    bad = res("A", actual_tool_calls=["lookup_order"],
-              tool_call_details=[{"name": "lookup_order", "arguments": {"order_id": "A1002"}}])
+    bad = res(
+        "A",
+        actual_tool_calls=["lookup_order"],
+        tool_call_details=[{"name": "lookup_order", "arguments": {"order_id": "A1002"}}],
+    )
     ev = evaluate([s], {"results": [bad]})
     assert ev.decision == "NO-GO" and "order_id='A1001'" in ev.reasons[0]
 
 
 def test_argument_checks_without_details_are_a_condition():
-    s = sc("A", expected_tool_calls=["lookup_order"],
-           tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}])
+    s = sc(
+        "A",
+        expected_tool_calls=["lookup_order"],
+        tool_argument_checks=[{"tool": "lookup_order", "args": {"order_id": "A1001"}}],
+    )
     ev = evaluate([s], {"results": [res("A", actual_tool_calls=["lookup_order"])]})
     assert ev.decision == "GO WITH CONDITIONS" and "not verified" in ev.conditions[0]
 
 
 def test_run_stats_from_outcomes_and_totals():
     from agent_uat.signoff import run_stats
+
     st = run_stats(res("A", "fail", run_outcomes=["pass", "pass", "fail"]))
     assert st.runs == 3 and st.passed == 2 and st.failed == 1 and st.blocked == 0
     assert st.pass_rate == 2 / 3 and st.unstable
@@ -137,8 +179,20 @@ def test_unstable_multi_run_is_a_condition():
 
 def test_multi_run_section_in_example_report(tmp_path):
     out = tmp_path / "signoff.md"
-    assert main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-                 "--results", str(EX / "support_agent_results.json"), "--out", str(out)]) == 0
+    assert (
+        main(
+            [
+                "signoff",
+                "--scenarios",
+                str(EX / "support_agent_scenarios.json"),
+                "--results",
+                str(EX / "support_agent_results.json"),
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
     md = out.read_text()
     assert "## Multi-run statistics" in md
     assert "| INJ-01 | 3 | 2 | 1 | 0 | 67% | no |" in md
@@ -147,8 +201,17 @@ def test_multi_run_section_in_example_report(tmp_path):
 
 def test_html_signoff_report(tmp_path):
     out = tmp_path / "signoff.html"
-    rc = main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-               "--results", str(EX / "support_agent_results.json"), "--out", str(out)])
+    rc = main(
+        [
+            "signoff",
+            "--scenarios",
+            str(EX / "support_agent_scenarios.json"),
+            "--results",
+            str(EX / "support_agent_results.json"),
+            "--out",
+            str(out),
+        ]
+    )
     assert rc == 0
     doc = out.read_text()
     assert doc.startswith("<!doctype html>")
@@ -159,9 +222,22 @@ def test_html_signoff_report(tmp_path):
 
 def test_format_flag_forces_html_without_html_suffix(tmp_path):
     out = tmp_path / "signoff.txt"
-    assert main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-                 "--results", str(EX / "support_agent_results.json"),
-                 "--format", "html", "--out", str(out)]) == 0
+    assert (
+        main(
+            [
+                "signoff",
+                "--scenarios",
+                str(EX / "support_agent_scenarios.json"),
+                "--results",
+                str(EX / "support_agent_results.json"),
+                "--format",
+                "html",
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
     assert out.read_text().startswith("<!doctype html>")
 
 
@@ -177,8 +253,21 @@ def test_rcm_prior_auth_example_end_to_end(tmp_path):
     assert "NO-GO" in md and "SYNTHETIC" in md
     assert "D-PA-101" in md and "PA-CIT-01" in md and "PA-DENY-01" in md
     assert "L99999" in md or "invented" in md.lower() or "guardrail" in md.lower()
-    assert main(["signoff", "--scenarios", str(scen), "--results", str(res_path),
-                 "--strict", "--out", str(out)]) == 1
+    assert (
+        main(
+            [
+                "signoff",
+                "--scenarios",
+                str(scen),
+                "--results",
+                str(res_path),
+                "--strict",
+                "--out",
+                str(out),
+            ]
+        )
+        == 1
+    )
     assert main(["validate", "--scenarios", str(scen)]) == 0
     json.loads(res_path.read_text())
 
@@ -194,8 +283,10 @@ def test_rcm_defect_triage_walkthrough_doc():
 def test_defect_url_renders_as_link_in_markdown_and_html():
     from agent_uat.signoff import render_html, render_markdown
 
-    data = {"results": [res("A")],
-            "defects": [{"id": "D-1", "severity": "S4", "url": "https://tracker.example/D-1"}]}
+    data = {
+        "results": [res("A")],
+        "defects": [{"id": "D-1", "severity": "S4", "url": "https://tracker.example/D-1"}],
+    }
     ev = evaluate([sc("A")], data)
     assert "| [D-1](https://tracker.example/D-1) | S4 |" in render_markdown(ev, {})
     assert "<a href='https://tracker.example/D-1'>D-1</a>" in render_html(ev, {})
@@ -204,8 +295,12 @@ def test_defect_url_renders_as_link_in_markdown_and_html():
 def test_defect_url_template_fills_missing_urls_only():
     from agent_uat.signoff import apply_defect_url_template
 
-    data = {"defects": [{"id": "D 1", "severity": "S3"},
-                        {"id": "D2", "severity": "S3", "url": "https://other.example/2"}]}
+    data = {
+        "defects": [
+            {"id": "D 1", "severity": "S3"},
+            {"id": "D2", "severity": "S3", "url": "https://other.example/2"},
+        ]
+    }
     apply_defect_url_template(data, "https://tracker.example/browse/{id}")
     assert data["defects"][0]["url"] == "https://tracker.example/browse/D%201"
     assert data["defects"][1]["url"] == "https://other.example/2"
@@ -217,8 +312,14 @@ def test_defect_url_must_be_http(tmp_path):
     from agent_uat.signoff import apply_defect_url_template, load_results
 
     p = tmp_path / "r.json"
-    p.write_text(json.dumps({"results": [], "defects": [
-        {"id": "D1", "severity": "S3", "url": "javascript:alert(1)"}]}))
+    p.write_text(
+        json.dumps(
+            {
+                "results": [],
+                "defects": [{"id": "D1", "severity": "S3", "url": "javascript:alert(1)"}],
+            }
+        )
+    )
     with pytest.raises(ValueError, match="url must start with http"):
         load_results(p)
     with pytest.raises(ValueError, match="containing {id}"):
@@ -227,7 +328,17 @@ def test_defect_url_must_be_http(tmp_path):
 
 def test_cli_defect_url_template(tmp_path):
     out = tmp_path / "signoff.md"
-    main(["signoff", "--scenarios", str(EX / "support_agent_scenarios.json"),
-          "--results", str(EX / "support_agent_results.json"), "--out", str(out),
-          "--defect-url-template", "https://tracker.example/browse/{id}"])
+    main(
+        [
+            "signoff",
+            "--scenarios",
+            str(EX / "support_agent_scenarios.json"),
+            "--results",
+            str(EX / "support_agent_results.json"),
+            "--out",
+            str(out),
+            "--defect-url-template",
+            "https://tracker.example/browse/{id}",
+        ]
+    )
     assert "[D-101](https://tracker.example/browse/D-101)" in out.read_text()
