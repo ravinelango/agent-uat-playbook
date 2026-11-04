@@ -16,6 +16,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e '.[dev]'
       - run: ruff check .
+      - run: ruff format --check .
       - run: pytest -q
       - name: Smoke test CLI on the synthetic example
         run: agent-uat validate --scenarios examples/support_agent_scenarios.json && agent-uat script --scenarios examples/support_agent_scenarios.json --out reports/script.md && agent-uat signoff --scenarios examples/support_agent_scenarios.json --results examples/support_agent_results.json --out reports/signoff.md && agent-uat trace --trace examples/traces/support_agent_otlp.json --scenario-id REF-01 --session run-1
