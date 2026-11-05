@@ -353,6 +353,42 @@ def render_markdown(ev: Evaluation, run: dict) -> str:
     return "\n".join(lines)
 
 
+def render_json(ev: Evaluation, run: dict) -> str:
+    """Machine-readable go/no-go sign-off (same fields the md/html reports use)."""
+    scenarios = []
+    for r in ev.rows:
+        st: RunStats = r["stats"]
+        scenarios.append(
+            {
+                "id": r["id"],
+                "title": r["title"],
+                "priority": r["priority"],
+                "status": r["status"],
+                "runs": r["runs"],
+                "defects": r["defects"],
+                "stats": {
+                    "runs": st.runs,
+                    "passed": st.passed,
+                    "failed": st.failed,
+                    "blocked": st.blocked,
+                    "pass_rate": st.pass_rate,
+                    "unstable": st.unstable,
+                },
+            }
+        )
+    payload = {
+        "run": run,
+        "decision": ev.decision,
+        "reasons": ev.reasons,
+        "conditions": ev.conditions,
+        "pass_rate": ev.pass_rate,
+        "counts": ev.counts,
+        "scenarios": scenarios,
+        "open_defects": ev.open_defects,
+    }
+    return json.dumps(payload, indent=2) + "\n"
+
+
 _CSS = (
     "body{font-family:system-ui,sans-serif;max-width:960px;margin:2em auto;color:#1b1f24;"
     "line-height:1.45}"

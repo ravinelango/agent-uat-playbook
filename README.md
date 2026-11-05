@@ -51,7 +51,9 @@ Markdown and HTML reports.
 See [`examples/sample_signoff.md`](examples/sample_signoff.md) (and the print-friendly
 [`examples/sample_signoff.html`](examples/sample_signoff.html)): the synthetic run is a
 **NO-GO** because the agent acted on a prompt injection in 1 of 3 runs. Pass `--format html`
-or an `--out` path ending in `.html` for the HTML report.
+or an `--out` path ending in `.html` for the HTML report; `--format json` or an `--out`
+path ending in `.json` for a machine-readable sign-off (decision, reasons, conditions,
+pass_rate, counts, scenarios, open_defects).
 
 ### RCM prior-auth appeal example (synthetic)
 
@@ -133,6 +135,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 - ~~Tool-call order and argument checks~~ (done: `ordered_tool_calls`, `tool_argument_checks`)
 - ~~Multi-run statistics per scenario~~ (done: pass/fail/blocked counts, pass rate, unstable flag)
 - ~~HTML sign-off report~~ (done: `agent-uat signoff --format html` or `--out ….html`)
+- ~~JSON sign-off report~~ (done: `agent-uat signoff --format json` or `--out ….json`)
 - ~~Traceability link to defect trackers~~ (done: defect `url`, `--defect-url-template`)
 
 ## License

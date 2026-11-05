@@ -241,6 +241,48 @@ def test_format_flag_forces_html_without_html_suffix(tmp_path):
     assert out.read_text().startswith("<!doctype html>")
 
 
+def test_json_signoff_report(tmp_path):
+    out = tmp_path / "signoff.json"
+    rc = main(
+        [
+            "signoff",
+            "--scenarios",
+            str(EX / "support_agent_scenarios.json"),
+            "--results",
+            str(EX / "support_agent_results.json"),
+            "--out",
+            str(out),
+        ]
+    )
+    assert rc == 0
+    data = json.loads(out.read_text())
+    assert data["decision"] == "NO-GO"
+    assert data["pass_rate"] >= 0
+    assert "pass" in data["counts"]
+    assert any(s["id"] == "INJ-01" for s in data["scenarios"])
+    assert any(d["id"] == "D-101" for d in data["open_defects"])
+    assert data["reasons"]
+    # --format json forces JSON even without a .json suffix
+    forced = tmp_path / "signoff.txt"
+    assert (
+        main(
+            [
+                "signoff",
+                "--scenarios",
+                str(EX / "support_agent_scenarios.json"),
+                "--results",
+                str(EX / "support_agent_results.json"),
+                "--format",
+                "json",
+                "--out",
+                str(forced),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(forced.read_text())["decision"] == "NO-GO"
+
+
 def test_rcm_prior_auth_example_end_to_end(tmp_path):
     """Synthetic RCM prior-auth set loads and signs off as NO-GO."""
     scen = EX / "rcm_prior_auth_scenarios.json"

@@ -14,6 +14,7 @@ from .signoff import (
     evaluate,
     load_results,
     render_html,
+    render_json,
     render_markdown,
 )
 from .traces import load_tool_calls
@@ -44,9 +45,9 @@ def main(argv: list[str] | None = None) -> int:
     g.add_argument("--out", type=Path)
     g.add_argument(
         "--format",
-        choices=("md", "html", "auto"),
+        choices=("md", "html", "json", "auto"),
         default="auto",
-        help="report format (auto: .html out → html, else md)",
+        help="report format (auto: .html/.json out → that format, else md)",
     )
     g.add_argument("--strict", action="store_true", help="exit 1 unless the decision is GO")
     g.add_argument(
@@ -97,8 +98,15 @@ def main(argv: list[str] | None = None) -> int:
     ev = evaluate(scenarios, data, a.min_pass_rate)
     fmt = a.format
     if fmt == "auto":
-        fmt = "html" if a.out and a.out.suffix.lower() == ".html" else "md"
-    body = (render_html if fmt == "html" else render_markdown)(ev, data.get("run", {}))
+        suffix = a.out.suffix.lower() if a.out else ""
+        if suffix == ".html":
+            fmt = "html"
+        elif suffix == ".json":
+            fmt = "json"
+        else:
+            fmt = "md"
+    render = {"html": render_html, "json": render_json, "md": render_markdown}[fmt]
+    body = render(ev, data.get("run", {}))
     _emit(body, a.out)
     print(f"decision: {ev.decision}", file=sys.stderr)
     return 1 if a.strict and ev.decision != "GO" else 0
