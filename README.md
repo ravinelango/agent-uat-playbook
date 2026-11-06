@@ -54,6 +54,7 @@ See [`examples/sample_signoff.md`](examples/sample_signoff.md) (and the print-fr
 or an `--out` path ending in `.html` for the HTML report; `--format json` or an `--out`
 path ending in `.json` for a machine-readable sign-off (decision, reasons, conditions,
 pass_rate, counts, scenarios, open_defects).
+A generated example is in [`examples/sample_signoff.json`](examples/sample_signoff.json) (same synthetic run).
 
 ### RCM prior-auth appeal example (synthetic)
 
