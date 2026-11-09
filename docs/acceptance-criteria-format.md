@@ -25,7 +25,7 @@ user must also accept: **what the agent does with its tools** and **what it must
 | `then` | Observable outcomes a business user can verify without reading code |
 | `expected_tool_calls` | Tools the agent should invoke (order not enforced unless `ordered_tool_calls` is set) |
 | `ordered_tool_calls` | Optional, `true` to require the expected tools in the listed order. Other calls may come in between. |
-| `tool_argument_checks` | Optional, e.g. `[{"tool": "create_refund_request", "args": {"order_id": "A1001"}}]`. At least one call to that tool must include those exact argument values. Checked against `tool_call_details` in the result (`agent-uat trace --with-args` writes it). |
+| `tool_argument_checks` | Optional, e.g. `[{"tool": "create_refund_request", "args": {"order_id": "A1001"}}]`. At least one call to that tool must include those exact argument values. Checked against `tool_call_details` in the result (`agent-uat trace --with-args` writes it). The tool must also be listed in `expected_tool_calls`; loading fails otherwise, which catches a misspelled tool name. |
 | `forbidden_tool_calls` | Tools the agent must not invoke in this scenario (e.g. irreversible actions) |
 | `guardrails` | Safety, privacy and policy checks that must hold |
 
