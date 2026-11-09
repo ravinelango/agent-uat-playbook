@@ -83,3 +83,15 @@ def test_load_rejects_non_object_scenario(tmp_path, entry):
     p.write_text(json.dumps([BASE, entry]))
     with pytest.raises(ValueError, match="JSON object"):
         load_scenarios(p)
+
+
+def test_argument_check_tool_must_be_expected():
+    # "lookup_ordr" vs "lookup_order": catch the typo when the scenario file is loaded
+    with pytest.raises(ValueError, match="not in expected_tool_calls.*lookup_ordr"):
+        parse_scenario(
+            {
+                **BASE,
+                "expected_tool_calls": ["lookup_order"],
+                "tool_argument_checks": [{"tool": "lookup_ordr", "args": {"order_id": "A1001"}}],
+            }
+        )

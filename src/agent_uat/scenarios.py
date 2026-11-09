@@ -84,6 +84,15 @@ def parse_scenario(d: dict) -> Scenario:
     banned = sorted({c["tool"] for c in s.tool_argument_checks} & set(s.forbidden_tool_calls))
     if banned:
         raise ValueError(f"scenario {s.id}: argument checks on forbidden tool(s): {banned}")
+    unlisted = sorted(
+        {c["tool"] for c in s.tool_argument_checks} - set(s.expected_tool_calls) - set(banned)
+    )
+    if unlisted:
+        # a check on a tool the scenario never expects is usually a typo in the tool name,
+        # and it would only ever show up as an "argument not verified" condition
+        raise ValueError(
+            f"scenario {s.id}: argument checks on tool(s) not in expected_tool_calls: {unlisted}"
+        )
     overlap = set(s.expected_tool_calls) & set(s.forbidden_tool_calls)
     if overlap:
         raise ValueError(f"scenario {s.id}: tool both expected and forbidden: {sorted(overlap)}")
