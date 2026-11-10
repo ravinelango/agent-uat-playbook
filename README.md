@@ -114,6 +114,8 @@ as an explicit `run_outcomes` list (`pass` / `fail` / `blocked` per attempt). Th
 report adds a **Multi-run statistics** table (runs, pass/fail/blocked counts, pass rate,
 stable yes/no). Mixed outcomes mark the scenario **unstable** and become a condition; any
 S1 occurrence is still S1 (see the triage guide).
+Each scenario gets exactly one result row: a repeated `scenario_id` in the results file is
+rejected, so record retries in that row's run fields instead of adding a second row.
 
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
