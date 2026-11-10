@@ -384,3 +384,24 @@ def test_cli_defect_url_template(tmp_path):
         ]
     )
     assert "[D-101](https://tracker.example/browse/D-101)" in out.read_text()
+
+
+def test_duplicate_result_scenario_id_is_rejected(tmp_path):
+    import pytest
+
+    from agent_uat.signoff import load_results
+
+    p = tmp_path / "results.json"
+    p.write_text(
+        json.dumps(
+            {
+                "results": [
+                    {"scenario_id": "UAT-001", "status": "fail"},
+                    {"scenario_id": "UAT-001", "status": "pass"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="duplicate scenario_id"):
+        load_results(p)

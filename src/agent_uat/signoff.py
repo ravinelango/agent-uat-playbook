@@ -60,7 +60,14 @@ class Evaluation:
 
 def load_results(path: str | Path) -> dict:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
+    seen: set[str] = set()
     for r in data.get("results", []):
+        sid = r.get("scenario_id")
+        if sid in seen:
+            raise ValueError(
+                f"result {sid}: duplicate scenario_id; put repeated runs in run_outcomes instead"
+            )
+        seen.add(sid)
         if r.get("status") not in STATUSES:
             raise ValueError(f"result {r.get('scenario_id')}: status must be one of {STATUSES}")
         outcomes = r.get("run_outcomes")
