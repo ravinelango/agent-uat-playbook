@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 from . import __version__
+from .compare import compare, load_report
+from .compare import render_markdown as render_compare
 from .scenarios import load_scenarios, to_test_script
 from .signoff import (
     apply_defect_url_template,
@@ -72,9 +74,16 @@ def main(argv: list[str] | None = None) -> int:
         dest="trace_format",
         help="trace export format (default: auto-detect)",
     )
+    c = sub.add_parser("compare", help="diff two JSON sign-off reports (e.g. build N vs N+1)")
+    c.add_argument("--before", required=True, type=Path, help="earlier signoff --format json")
+    c.add_argument("--after", required=True, type=Path, help="later signoff --format json")
+    c.add_argument("--out", type=Path)
+    c.add_argument(
+        "--strict", action="store_true", help="exit 1 if any scenario went pass → fail/blocked"
+    )
     a = p.parse_args(argv)
 
-    for flag in ("scenarios", "results", "trace"):
+    for flag in ("scenarios", "results", "trace", "before", "after"):
         path = getattr(a, flag, None)
         if path is not None and not path.is_file():
             print(f"agent-uat: error: no such file for --{flag}: {path}", file=sys.stderr)
@@ -87,6 +96,15 @@ def main(argv: list[str] | None = None) -> int:
             entry["tool_call_details"] = [{"name": c.name, "arguments": c.arguments} for c in calls]
         print(json.dumps(entry, indent=2))
         return 0
+    if a.cmd == "compare":
+        try:
+            cmp = compare(load_report(a.before), load_report(a.after))
+        except ValueError as e:
+            print(f"agent-uat: error: {e}", file=sys.stderr)
+            return 2
+        _emit(render_compare(cmp, str(a.before), str(a.after)), a.out)
+        print(f"regressions: {len(cmp.of_kind('regression'))}", file=sys.stderr)
+        return 1 if a.strict and cmp.has_regression else 0
     scenarios = load_scenarios(a.scenarios)
     if a.cmd == "validate":
         print(f"OK: {len(scenarios)} scenarios")
