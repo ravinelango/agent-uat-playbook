@@ -117,6 +117,20 @@ S1 occurrence is still S1 (see the triage guide).
 Each scenario gets exactly one result row: a repeated `scenario_id` in the results file is
 rejected, so record retries in that row's run fields instead of adding a second row.
 
+### Comparing two builds
+Keep the JSON sign-off from each UAT round and diff them to see what moved between agent builds:
+
+```bash
+agent-uat signoff --scenarios s.yaml --results build_n.json --out signoff_n.json
+agent-uat signoff --scenarios s.yaml --results build_n1.json --out signoff_n1.json
+agent-uat compare --before signoff_n.json --after signoff_n1.json --strict
+```
+
+Each scenario is classed as `regression` (pass → fail/blocked), `fixed`, `changed`
+(e.g. pass → not run), `added`, or `removed`; regressions are listed first. `--strict` exits 1
+on any regression, so it can gate a release even when both rounds reach the same decision.
+Unchanged scenarios are left out of the table.
+
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
@@ -140,6 +154,7 @@ agent, scenarios and results are **synthetic** and exist only to demonstrate the
 - ~~HTML sign-off report~~ (done: `agent-uat signoff --format html` or `--out ….html`)
 - ~~JSON sign-off report~~ (done: `agent-uat signoff --format json` or `--out ….json`)
 - ~~Traceability link to defect trackers~~ (done: defect `url`, `--defect-url-template`)
+- ~~Build-to-build comparison~~ (done: `agent-uat compare --before/--after`)
 
 ## License
 MIT © Ravin Elango
