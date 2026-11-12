@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .compare import compare, load_report
+from .compare import compare, load_report, to_dict
 from .compare import render_markdown as render_compare
 from .scenarios import load_scenarios, to_test_script
 from .signoff import (
@@ -79,6 +79,13 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--after", required=True, type=Path, help="later signoff --format json")
     c.add_argument("--out", type=Path)
     c.add_argument(
+        "--format",
+        choices=("md", "json"),
+        default=None,
+        dest="compare_format",
+        help="output format (default: md, or json when --out ends in .json)",
+    )
+    c.add_argument(
         "--strict", action="store_true", help="exit 1 if any scenario went pass → fail/blocked"
     )
     a = p.parse_args(argv)
@@ -102,7 +109,14 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as e:
             print(f"agent-uat: error: {e}", file=sys.stderr)
             return 2
-        _emit(render_compare(cmp, str(a.before), str(a.after)), a.out)
+        fmt = a.compare_format or (
+            "json" if a.out is not None and a.out.suffix.lower() == ".json" else "md"
+        )
+        if fmt == "json":
+            text = json.dumps(to_dict(cmp, str(a.before), str(a.after)), indent=2) + "\n"
+        else:
+            text = render_compare(cmp, str(a.before), str(a.after))
+        _emit(text, a.out)
         print(f"regressions: {len(cmp.of_kind('regression'))}", file=sys.stderr)
         return 1 if a.strict and cmp.has_regression else 0
     scenarios = load_scenarios(a.scenarios)

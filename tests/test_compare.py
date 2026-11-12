@@ -78,3 +78,24 @@ def test_cli_compare_missing_file(tmp_path):
         )
         == 2
     )
+
+
+def test_cli_compare_json_format(tmp_path, capsys):
+    b, a = tmp_path / "b.json", tmp_path / "a.json"
+    b.write_text(json.dumps(_report("GO", {"A": "pass", "B": "pass"})))
+    a.write_text(json.dumps(_report("NO-GO", {"A": "fail", "B": "pass"})))
+    assert main(["compare", "--before", str(b), "--after", str(a), "--format", "json"]) == 0
+    data = json.loads(capsys.readouterr().out)
+    assert data["has_regression"] is True
+    assert data["counts"]["regression"] == 1 and data["counts"]["unchanged"] == 1
+    assert [x["id"] for x in data["changes"]] == ["A"]
+    assert data["after"]["decision"] == "NO-GO"
+
+
+def test_cli_compare_json_inferred_from_out_suffix(tmp_path):
+    b = tmp_path / "b.json"
+    b.write_text(json.dumps(_report("GO", {"A": "pass"})))
+    out = tmp_path / "cmp.json"
+    assert main(["compare", "--before", str(b), "--after", str(b), "--out", str(out)]) == 0
+    data = json.loads(out.read_text())
+    assert data["has_regression"] is False and data["changes"] == []

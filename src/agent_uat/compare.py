@@ -109,3 +109,36 @@ def render_markdown(c: Comparison, before_label: str, after_label: str) -> str:
             f"| {x.id} {x.title} | {x.priority} | {x.before or '—'} | {x.after or '—'} | {x.kind} |"
         )
     return "\n".join(lines) + "\n"
+
+
+def to_dict(c: Comparison, before_label: str, after_label: str) -> dict:
+    """Machine-readable comparison, e.g. for a CI step that gates on regressions."""
+    return {
+        "before": {
+            "report": before_label,
+            "decision": c.before_decision,
+            "pass_rate": c.before_pass_rate,
+        },
+        "after": {
+            "report": after_label,
+            "decision": c.after_decision,
+            "pass_rate": c.after_pass_rate,
+        },
+        "counts": {
+            k: len(c.of_kind(k))
+            for k in ("regression", "fixed", "changed", "added", "removed", "unchanged")
+        },
+        "has_regression": c.has_regression,
+        "changes": [
+            {
+                "id": x.id,
+                "title": x.title,
+                "priority": x.priority,
+                "before": x.before,
+                "after": x.after,
+                "kind": x.kind,
+            }
+            for x in c.changes
+            if x.kind != "unchanged"
+        ],
+    }
