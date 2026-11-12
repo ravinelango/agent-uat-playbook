@@ -131,6 +131,10 @@ Each scenario is classed as `regression` (pass → fail/blocked), `fixed`, `chan
 on any regression, so it can gate a release even when both rounds reach the same decision.
 Unchanged scenarios are left out of the table.
 
+Add `--format json` (or write to an `--out` path ending in `.json`) for a machine-readable diff
+with per-kind counts, `has_regression`, and only the scenarios that moved, for CI steps that
+need more than the exit code.
+
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
