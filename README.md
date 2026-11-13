@@ -129,7 +129,8 @@ agent-uat compare --before signoff_n.json --after signoff_n1.json --strict
 Each scenario is classed as `regression` (pass → fail/blocked), `fixed`, `changed`
 (e.g. pass → not run), `added`, or `removed`; regressions are listed first. `--strict` exits 1
 on any regression, so it can gate a release even when both rounds reach the same decision.
-Unchanged scenarios are left out of the table.
+Unchanged scenarios are left out of the table. A report that lists the same scenario id twice
+is rejected (exit 2) rather than letting the later row hide the earlier status.
 
 Add `--format json` (or write to an `--out` path ending in `.json`) for a machine-readable diff
 with per-kind counts, `has_regression`, and only the scenarios that moved, for CI steps that
