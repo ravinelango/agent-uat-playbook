@@ -55,6 +55,15 @@ def test_load_report_rejects_non_report(tmp_path):
         load_report(p)
 
 
+def test_load_report_rejects_duplicate_scenario_id(tmp_path):
+    rep = _report("GO", {"A": "pass"})
+    rep["scenarios"].append({"id": "A", "title": "t-A", "priority": "high", "status": "fail"})
+    p = tmp_path / "dup.json"
+    p.write_text(json.dumps(rep))
+    with pytest.raises(ValueError, match="duplicate scenario id 'A'"):
+        load_report(p)
+
+
 def test_cli_compare_strict_exit_codes(tmp_path, capsys):
     b, a = tmp_path / "b.json", tmp_path / "a.json"
     b.write_text(json.dumps(_report("GO", {"A": "pass"})))

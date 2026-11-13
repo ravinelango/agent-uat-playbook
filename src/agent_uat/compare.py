@@ -56,6 +56,12 @@ def load_report(path: str | Path) -> dict:
     for s in data["scenarios"]:
         if not isinstance(s, dict) or "id" not in s or s.get("status") not in _RANK:
             raise ValueError(f"{path}: scenario entry missing id or has an unknown status: {s!r}")
+    seen: set[str] = set()
+    for s in data["scenarios"]:
+        if s["id"] in seen:
+            # A repeat would silently overwrite the earlier row and hide a status change.
+            raise ValueError(f"{path}: duplicate scenario id {s['id']!r}")
+        seen.add(s["id"])
     return data
 
 
