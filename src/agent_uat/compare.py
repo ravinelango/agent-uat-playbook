@@ -8,6 +8,8 @@ from pathlib import Path
 
 # Higher is better. "not run" sits below pass but is not treated as a regression on its own.
 _RANK = {"pass": 3, "not run": 2, "blocked": 1, "fail": 0}
+# Sign-off decisions, best first. Anything else (e.g. "?") is not ranked.
+_DECISION_RANK = {"GO": 2, "GO WITH CONDITIONS": 1, "NO-GO": 0}
 
 
 @dataclass
@@ -47,6 +49,13 @@ class Comparison:
     @property
     def has_regression(self) -> bool:
         return bool(self.of_kind("regression"))
+
+    @property
+    def decision_worsened(self) -> bool:
+        """True when the overall decision dropped, e.g. GO -> NO-GO or GO -> GO WITH CONDITIONS."""
+        b = _DECISION_RANK.get(self.before_decision)
+        a = _DECISION_RANK.get(self.after_decision)
+        return b is not None and a is not None and a < b
 
 
 def load_report(path: str | Path) -> dict:
@@ -102,8 +111,10 @@ def render_markdown(c: Comparison, before_label: str, after_label: str) -> str:
         f"- After: `{after_label}`: **{c.after_decision}**, pass rate {_rate(c.after_pass_rate)}",
         f"- Regressions (pass → fail/blocked): **{len(c.of_kind('regression'))}**",
         f"- Fixed (fail/blocked → pass): {len(c.of_kind('fixed'))}",
-        "",
     ]
+    if c.decision_worsened:
+        lines.append(f"- **Decision worsened: {c.before_decision} → {c.after_decision}**")
+    lines.append("")
     moved = [x for x in c.changes if x.kind != "unchanged"]
     if not moved:
         lines.append("No scenario changed status.")
@@ -135,6 +146,7 @@ def to_dict(c: Comparison, before_label: str, after_label: str) -> dict:
             for k in ("regression", "fixed", "changed", "added", "removed", "unchanged")
         },
         "has_regression": c.has_regression,
+        "decision_worsened": c.decision_worsened,
         "changes": [
             {
                 "id": x.id,

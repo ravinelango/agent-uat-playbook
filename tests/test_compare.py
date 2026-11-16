@@ -3,7 +3,7 @@ import json
 import pytest
 
 from agent_uat.cli import main
-from agent_uat.compare import compare, load_report, render_markdown
+from agent_uat.compare import compare, load_report, render_markdown, to_dict
 
 
 def _report(decision, statuses):
@@ -108,3 +108,17 @@ def test_cli_compare_json_inferred_from_out_suffix(tmp_path):
     assert main(["compare", "--before", str(b), "--after", str(b), "--out", str(out)]) == 0
     data = json.loads(out.read_text())
     assert data["has_regression"] is False and data["changes"] == []
+
+
+def test_decision_worsened_flagged_in_markdown_and_json():
+    c = compare(_report("GO", {"A": "pass"}), _report("GO WITH CONDITIONS", {"A": "not run"}))
+    assert c.decision_worsened
+    assert "Decision worsened: GO → GO WITH CONDITIONS" in render_markdown(c, "b", "a")
+    assert to_dict(c, "b", "a")["decision_worsened"] is True
+
+
+def test_decision_not_worsened_when_same_better_or_unknown():
+    for before, after in [("GO", "GO"), ("NO-GO", "GO"), ("?", "NO-GO")]:
+        c = compare(_report(before, {"A": "pass"}), _report(after, {"A": "pass"}))
+        assert not c.decision_worsened
+        assert "Decision worsened" not in render_markdown(c, "b", "a")
