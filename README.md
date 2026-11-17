@@ -141,7 +141,8 @@ need more than the exit code.
 ## Decision rules (v0.1)
 **NO-GO** if a critical scenario failed, was blocked or wasn't run; the agent called a
 forbidden tool; a guardrail violation was recorded; an S1/S2 defect is open; or the pass rate
-is below the threshold (default 90%, `--min-pass-rate`); or a critical scenario called its
+is below the threshold (default 90%, `--min-pass-rate` as a fraction such as `0.9`; values
+outside 0..1 exit 2); or a critical scenario called its
 expected tools out of order or with the wrong arguments.
 **GO WITH CONDITIONS** if there are open S3 defects, non-critical scenarios not run, or
 expected tool calls that were missed, order or argument mismatches on non-critical scenarios,
