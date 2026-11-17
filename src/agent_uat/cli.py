@@ -43,7 +43,12 @@ def main(argv: list[str] | None = None) -> int:
     g = sub.add_parser("signoff", help="evaluate results and write a go/no-go report")
     g.add_argument("--scenarios", required=True, type=Path)
     g.add_argument("--results", required=True, type=Path)
-    g.add_argument("--min-pass-rate", type=float, default=0.9)
+    g.add_argument(
+        "--min-pass-rate",
+        type=float,
+        default=0.9,
+        help="pass-rate threshold as a fraction between 0 and 1 (default 0.9, i.e. 90%%)",
+    )
     g.add_argument("--out", type=Path)
     g.add_argument(
         "--format",
@@ -126,6 +131,13 @@ def main(argv: list[str] | None = None) -> int:
         if a.strict and cmp.has_regression:
             return 1
         return 1 if a.strict_decision and cmp.decision_worsened else 0
+    if a.cmd == "signoff" and not 0.0 <= a.min_pass_rate <= 1.0:
+        # 90 instead of 0.9 would otherwise turn every run into a silent NO-GO.
+        print(
+            f"agent-uat: error: --min-pass-rate must be between 0 and 1, got {a.min_pass_rate}",
+            file=sys.stderr,
+        )
+        return 2
     scenarios = load_scenarios(a.scenarios)
     if a.cmd == "validate":
         print(f"OK: {len(scenarios)} scenarios")
