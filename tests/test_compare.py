@@ -122,3 +122,18 @@ def test_decision_not_worsened_when_same_better_or_unknown():
         c = compare(_report(before, {"A": "pass"}), _report(after, {"A": "pass"}))
         assert not c.decision_worsened
         assert "Decision worsened" not in render_markdown(c, "b", "a")
+
+
+def test_cli_compare_strict_decision_exit_codes(tmp_path):
+    b, a, r = tmp_path / "b.json", tmp_path / "a.json", tmp_path / "r.json"
+    # Decision drops but no scenario regresses (pass -> not run is "changed").
+    b.write_text(json.dumps(_report("GO", {"A": "pass"})))
+    a.write_text(json.dumps(_report("GO WITH CONDITIONS", {"A": "not run"})))
+    # Scenario regresses but the decision stays the same.
+    r.write_text(json.dumps(_report("GO", {"A": "fail"})))
+    args = ["compare", "--before", str(b)]
+    assert main([*args, "--after", str(a), "--strict"]) == 0
+    assert main([*args, "--after", str(a), "--strict-decision"]) == 1
+    assert main([*args, "--after", str(r), "--strict-decision"]) == 0
+    assert main([*args, "--after", str(r), "--strict", "--strict-decision"]) == 1
+    assert main([*args, "--after", str(b), "--strict", "--strict-decision"]) == 0

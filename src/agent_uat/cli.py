@@ -88,6 +88,11 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument(
         "--strict", action="store_true", help="exit 1 if any scenario went pass → fail/blocked"
     )
+    c.add_argument(
+        "--strict-decision",
+        action="store_true",
+        help="exit 1 if the overall decision got worse (e.g. GO → NO-GO); combines with --strict",
+    )
     a = p.parse_args(argv)
 
     for flag in ("scenarios", "results", "trace", "before", "after"):
@@ -118,7 +123,9 @@ def main(argv: list[str] | None = None) -> int:
             text = render_compare(cmp, str(a.before), str(a.after))
         _emit(text, a.out)
         print(f"regressions: {len(cmp.of_kind('regression'))}", file=sys.stderr)
-        return 1 if a.strict and cmp.has_regression else 0
+        if a.strict and cmp.has_regression:
+            return 1
+        return 1 if a.strict_decision and cmp.decision_worsened else 0
     scenarios = load_scenarios(a.scenarios)
     if a.cmd == "validate":
         print(f"OK: {len(scenarios)} scenarios")
